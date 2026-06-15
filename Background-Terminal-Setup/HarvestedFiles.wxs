@@ -1,0 +1,775 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+      <Component Id="Comp_0" Guid="F06374FC-ED82-4AD9-BA08-000000000000" Win64="yes">
+        <File Id="File_Accessibility_dll" Name="Accessibility.dll" Source="$(var.BuildSourceDir)\Accessibility.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_1" Guid="F06374FC-ED82-4AD9-BA08-000000000001" Win64="yes">
+        <File Id="File_Background_Terminal_Core_dll" Name="Background-Terminal.Core.dll" Source="$(var.BuildSourceDir)\Background-Terminal.Core.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_2" Guid="F06374FC-ED82-4AD9-BA08-000000000002" Win64="yes">
+        <File Id="File_Background_Terminal_Core_pdb" Name="Background-Terminal.Core.pdb" Source="$(var.BuildSourceDir)\Background-Terminal.Core.pdb" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_3" Guid="F06374FC-ED82-4AD9-BA08-000000000003" Win64="yes">
+        <File Id="File_Background_Terminal_deps_json" Name="Background-Terminal.deps.json" Source="$(var.BuildSourceDir)\Background-Terminal.deps.json" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_4" Guid="F06374FC-ED82-4AD9-BA08-000000000004" Win64="yes">
+        <File Id="File_Background_Terminal_dll" Name="Background-Terminal.dll" Source="$(var.BuildSourceDir)\Background-Terminal.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_5" Guid="F06374FC-ED82-4AD9-BA08-000000000005" Win64="yes">
+        <File Id="File_Background_Terminal_exe" Name="Background-Terminal.exe" Source="$(var.BuildSourceDir)\Background-Terminal.exe" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_6" Guid="F06374FC-ED82-4AD9-BA08-000000000006" Win64="yes">
+        <File Id="File_Background_Terminal_pdb" Name="Background-Terminal.pdb" Source="$(var.BuildSourceDir)\Background-Terminal.pdb" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_7" Guid="F06374FC-ED82-4AD9-BA08-000000000007" Win64="yes">
+        <File Id="File_Background_Terminal_runtimeconfig_json" Name="Background-Terminal.runtimeconfig.json" Source="$(var.BuildSourceDir)\Background-Terminal.runtimeconfig.json" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_8" Guid="F06374FC-ED82-4AD9-BA08-000000000008" Win64="yes">
+        <File Id="File_clretwrc_dll" Name="clretwrc.dll" Source="$(var.BuildSourceDir)\clretwrc.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_9" Guid="F06374FC-ED82-4AD9-BA08-000000000009" Win64="yes">
+        <File Id="File_clrgc_dll" Name="clrgc.dll" Source="$(var.BuildSourceDir)\clrgc.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_10" Guid="F06374FC-ED82-4AD9-BA08-000000000010" Win64="yes">
+        <File Id="File_clrgcexp_dll" Name="clrgcexp.dll" Source="$(var.BuildSourceDir)\clrgcexp.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_11" Guid="F06374FC-ED82-4AD9-BA08-000000000011" Win64="yes">
+        <File Id="File_clrjit_dll" Name="clrjit.dll" Source="$(var.BuildSourceDir)\clrjit.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_12" Guid="F06374FC-ED82-4AD9-BA08-000000000012" Win64="yes">
+        <File Id="File_coreclr_dll" Name="coreclr.dll" Source="$(var.BuildSourceDir)\coreclr.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_13" Guid="F06374FC-ED82-4AD9-BA08-000000000013" Win64="yes">
+        <File Id="File_CoreMeter_dll" Name="CoreMeter.dll" Source="$(var.BuildSourceDir)\CoreMeter.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_14" Guid="F06374FC-ED82-4AD9-BA08-000000000014" Win64="yes">
+        <File Id="File_createdump_exe" Name="createdump.exe" Source="$(var.BuildSourceDir)\createdump.exe" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_15" Guid="F06374FC-ED82-4AD9-BA08-000000000015" Win64="yes">
+        <File Id="File_D3DCompiler_47_cor3_dll" Name="D3DCompiler_47_cor3.dll" Source="$(var.BuildSourceDir)\D3DCompiler_47_cor3.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_16" Guid="F06374FC-ED82-4AD9-BA08-000000000016" Win64="yes">
+        <File Id="File_DirectWriteForwarder_dll" Name="DirectWriteForwarder.dll" Source="$(var.BuildSourceDir)\DirectWriteForwarder.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_17" Guid="F06374FC-ED82-4AD9-BA08-000000000017" Win64="yes">
+        <File Id="File_Hardcodet_NotifyIcon_Wpf_dll" Name="Hardcodet.NotifyIcon.Wpf.dll" Source="$(var.BuildSourceDir)\Hardcodet.NotifyIcon.Wpf.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_18" Guid="F06374FC-ED82-4AD9-BA08-000000000018" Win64="yes">
+        <File Id="File_hostfxr_dll" Name="hostfxr.dll" Source="$(var.BuildSourceDir)\hostfxr.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_19" Guid="F06374FC-ED82-4AD9-BA08-000000000019" Win64="yes">
+        <File Id="File_hostpolicy_dll" Name="hostpolicy.dll" Source="$(var.BuildSourceDir)\hostpolicy.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_20" Guid="F06374FC-ED82-4AD9-BA08-000000000020" Win64="yes">
+        <File Id="File_Microsoft_CSharp_dll" Name="Microsoft.CSharp.dll" Source="$(var.BuildSourceDir)\Microsoft.CSharp.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_21" Guid="F06374FC-ED82-4AD9-BA08-000000000021" Win64="yes">
+        <File Id="File_Microsoft_DiaSymReader_Native_amd64_dll" Name="Microsoft.DiaSymReader.Native.amd64.dll" Source="$(var.BuildSourceDir)\Microsoft.DiaSymReader.Native.amd64.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_22" Guid="F06374FC-ED82-4AD9-BA08-000000000022" Win64="yes">
+        <File Id="File_Microsoft_VisualBasic_Core_dll" Name="Microsoft.VisualBasic.Core.dll" Source="$(var.BuildSourceDir)\Microsoft.VisualBasic.Core.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_23" Guid="F06374FC-ED82-4AD9-BA08-000000000023" Win64="yes">
+        <File Id="File_Microsoft_VisualBasic_dll" Name="Microsoft.VisualBasic.dll" Source="$(var.BuildSourceDir)\Microsoft.VisualBasic.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_24" Guid="F06374FC-ED82-4AD9-BA08-000000000024" Win64="yes">
+        <File Id="File_Microsoft_VisualBasic_Forms_dll" Name="Microsoft.VisualBasic.Forms.dll" Source="$(var.BuildSourceDir)\Microsoft.VisualBasic.Forms.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_25" Guid="F06374FC-ED82-4AD9-BA08-000000000025" Win64="yes">
+        <File Id="File_Microsoft_Win32_Primitives_dll" Name="Microsoft.Win32.Primitives.dll" Source="$(var.BuildSourceDir)\Microsoft.Win32.Primitives.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_26" Guid="F06374FC-ED82-4AD9-BA08-000000000026" Win64="yes">
+        <File Id="File_Microsoft_Win32_Registry_AccessControl_dll" Name="Microsoft.Win32.Registry.AccessControl.dll" Source="$(var.BuildSourceDir)\Microsoft.Win32.Registry.AccessControl.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_27" Guid="F06374FC-ED82-4AD9-BA08-000000000027" Win64="yes">
+        <File Id="File_Microsoft_Win32_Registry_dll" Name="Microsoft.Win32.Registry.dll" Source="$(var.BuildSourceDir)\Microsoft.Win32.Registry.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_28" Guid="F06374FC-ED82-4AD9-BA08-000000000028" Win64="yes">
+        <File Id="File_Microsoft_Win32_SystemEvents_dll" Name="Microsoft.Win32.SystemEvents.dll" Source="$(var.BuildSourceDir)\Microsoft.Win32.SystemEvents.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_29" Guid="F06374FC-ED82-4AD9-BA08-000000000029" Win64="yes">
+        <File Id="File_mscordaccore_dll" Name="mscordaccore.dll" Source="$(var.BuildSourceDir)\mscordaccore.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_30" Guid="F06374FC-ED82-4AD9-BA08-000000000030" Win64="yes">
+        <File Id="File_mscordaccore_amd64_amd64_10_0_926_27113_dll" Name="mscordaccore_amd64_amd64_10.0.926.27113.dll" Source="$(var.BuildSourceDir)\mscordaccore_amd64_amd64_10.0.926.27113.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_31" Guid="F06374FC-ED82-4AD9-BA08-000000000031" Win64="yes">
+        <File Id="File_mscordbi_dll" Name="mscordbi.dll" Source="$(var.BuildSourceDir)\mscordbi.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_32" Guid="F06374FC-ED82-4AD9-BA08-000000000032" Win64="yes">
+        <File Id="File_mscorlib_dll" Name="mscorlib.dll" Source="$(var.BuildSourceDir)\mscorlib.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_33" Guid="F06374FC-ED82-4AD9-BA08-000000000033" Win64="yes">
+        <File Id="File_mscorrc_dll" Name="mscorrc.dll" Source="$(var.BuildSourceDir)\mscorrc.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_34" Guid="F06374FC-ED82-4AD9-BA08-000000000034" Win64="yes">
+        <File Id="File_msquic_dll" Name="msquic.dll" Source="$(var.BuildSourceDir)\msquic.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_35" Guid="F06374FC-ED82-4AD9-BA08-000000000035" Win64="yes">
+        <File Id="File_netstandard_dll" Name="netstandard.dll" Source="$(var.BuildSourceDir)\netstandard.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_36" Guid="F06374FC-ED82-4AD9-BA08-000000000036" Win64="yes">
+        <File Id="File_PenImc_cor3_dll" Name="PenImc_cor3.dll" Source="$(var.BuildSourceDir)\PenImc_cor3.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_37" Guid="F06374FC-ED82-4AD9-BA08-000000000037" Win64="yes">
+        <File Id="File_PresentationCore_dll" Name="PresentationCore.dll" Source="$(var.BuildSourceDir)\PresentationCore.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_38" Guid="F06374FC-ED82-4AD9-BA08-000000000038" Win64="yes">
+        <File Id="File_PresentationFramework_SystemCore_dll" Name="PresentationFramework-SystemCore.dll" Source="$(var.BuildSourceDir)\PresentationFramework-SystemCore.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_39" Guid="F06374FC-ED82-4AD9-BA08-000000000039" Win64="yes">
+        <File Id="File_PresentationFramework_SystemData_dll" Name="PresentationFramework-SystemData.dll" Source="$(var.BuildSourceDir)\PresentationFramework-SystemData.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_40" Guid="F06374FC-ED82-4AD9-BA08-000000000040" Win64="yes">
+        <File Id="File_PresentationFramework_SystemDrawing_dll" Name="PresentationFramework-SystemDrawing.dll" Source="$(var.BuildSourceDir)\PresentationFramework-SystemDrawing.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_41" Guid="F06374FC-ED82-4AD9-BA08-000000000041" Win64="yes">
+        <File Id="File_PresentationFramework_SystemXml_dll" Name="PresentationFramework-SystemXml.dll" Source="$(var.BuildSourceDir)\PresentationFramework-SystemXml.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_42" Guid="F06374FC-ED82-4AD9-BA08-000000000042" Win64="yes">
+        <File Id="File_PresentationFramework_SystemXmlLinq_dll" Name="PresentationFramework-SystemXmlLinq.dll" Source="$(var.BuildSourceDir)\PresentationFramework-SystemXmlLinq.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_43" Guid="F06374FC-ED82-4AD9-BA08-000000000043" Win64="yes">
+        <File Id="File_PresentationFramework_Aero_dll" Name="PresentationFramework.Aero.dll" Source="$(var.BuildSourceDir)\PresentationFramework.Aero.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_44" Guid="F06374FC-ED82-4AD9-BA08-000000000044" Win64="yes">
+        <File Id="File_PresentationFramework_Aero2_dll" Name="PresentationFramework.Aero2.dll" Source="$(var.BuildSourceDir)\PresentationFramework.Aero2.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_45" Guid="F06374FC-ED82-4AD9-BA08-000000000045" Win64="yes">
+        <File Id="File_PresentationFramework_AeroLite_dll" Name="PresentationFramework.AeroLite.dll" Source="$(var.BuildSourceDir)\PresentationFramework.AeroLite.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_46" Guid="F06374FC-ED82-4AD9-BA08-000000000046" Win64="yes">
+        <File Id="File_PresentationFramework_Classic_dll" Name="PresentationFramework.Classic.dll" Source="$(var.BuildSourceDir)\PresentationFramework.Classic.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_47" Guid="F06374FC-ED82-4AD9-BA08-000000000047" Win64="yes">
+        <File Id="File_PresentationFramework_dll" Name="PresentationFramework.dll" Source="$(var.BuildSourceDir)\PresentationFramework.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_48" Guid="F06374FC-ED82-4AD9-BA08-000000000048" Win64="yes">
+        <File Id="File_PresentationFramework_Fluent_dll" Name="PresentationFramework.Fluent.dll" Source="$(var.BuildSourceDir)\PresentationFramework.Fluent.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_49" Guid="F06374FC-ED82-4AD9-BA08-000000000049" Win64="yes">
+        <File Id="File_PresentationFramework_Luna_dll" Name="PresentationFramework.Luna.dll" Source="$(var.BuildSourceDir)\PresentationFramework.Luna.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_50" Guid="F06374FC-ED82-4AD9-BA08-000000000050" Win64="yes">
+        <File Id="File_PresentationFramework_Royale_dll" Name="PresentationFramework.Royale.dll" Source="$(var.BuildSourceDir)\PresentationFramework.Royale.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_51" Guid="F06374FC-ED82-4AD9-BA08-000000000051" Win64="yes">
+        <File Id="File_PresentationNative_cor3_dll" Name="PresentationNative_cor3.dll" Source="$(var.BuildSourceDir)\PresentationNative_cor3.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_52" Guid="F06374FC-ED82-4AD9-BA08-000000000052" Win64="yes">
+        <File Id="File_PresentationUI_dll" Name="PresentationUI.dll" Source="$(var.BuildSourceDir)\PresentationUI.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_53" Guid="F06374FC-ED82-4AD9-BA08-000000000053" Win64="yes">
+        <File Id="File_ReachFramework_dll" Name="ReachFramework.dll" Source="$(var.BuildSourceDir)\ReachFramework.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_54" Guid="F06374FC-ED82-4AD9-BA08-000000000054" Win64="yes">
+        <File Id="File_System_AppContext_dll" Name="System.AppContext.dll" Source="$(var.BuildSourceDir)\System.AppContext.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_55" Guid="F06374FC-ED82-4AD9-BA08-000000000055" Win64="yes">
+        <File Id="File_System_Buffers_dll" Name="System.Buffers.dll" Source="$(var.BuildSourceDir)\System.Buffers.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_56" Guid="F06374FC-ED82-4AD9-BA08-000000000056" Win64="yes">
+        <File Id="File_System_CodeDom_dll" Name="System.CodeDom.dll" Source="$(var.BuildSourceDir)\System.CodeDom.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_57" Guid="F06374FC-ED82-4AD9-BA08-000000000057" Win64="yes">
+        <File Id="File_System_Collections_Concurrent_dll" Name="System.Collections.Concurrent.dll" Source="$(var.BuildSourceDir)\System.Collections.Concurrent.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_58" Guid="F06374FC-ED82-4AD9-BA08-000000000058" Win64="yes">
+        <File Id="File_System_Collections_dll" Name="System.Collections.dll" Source="$(var.BuildSourceDir)\System.Collections.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_59" Guid="F06374FC-ED82-4AD9-BA08-000000000059" Win64="yes">
+        <File Id="File_System_Collections_Immutable_dll" Name="System.Collections.Immutable.dll" Source="$(var.BuildSourceDir)\System.Collections.Immutable.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_60" Guid="F06374FC-ED82-4AD9-BA08-000000000060" Win64="yes">
+        <File Id="File_System_Collections_NonGeneric_dll" Name="System.Collections.NonGeneric.dll" Source="$(var.BuildSourceDir)\System.Collections.NonGeneric.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_61" Guid="F06374FC-ED82-4AD9-BA08-000000000061" Win64="yes">
+        <File Id="File_System_Collections_Specialized_dll" Name="System.Collections.Specialized.dll" Source="$(var.BuildSourceDir)\System.Collections.Specialized.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_62" Guid="F06374FC-ED82-4AD9-BA08-000000000062" Win64="yes">
+        <File Id="File_System_ComponentModel_Annotations_dll" Name="System.ComponentModel.Annotations.dll" Source="$(var.BuildSourceDir)\System.ComponentModel.Annotations.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_63" Guid="F06374FC-ED82-4AD9-BA08-000000000063" Win64="yes">
+        <File Id="File_System_ComponentModel_DataAnnotations_dll" Name="System.ComponentModel.DataAnnotations.dll" Source="$(var.BuildSourceDir)\System.ComponentModel.DataAnnotations.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_64" Guid="F06374FC-ED82-4AD9-BA08-000000000064" Win64="yes">
+        <File Id="File_System_ComponentModel_dll" Name="System.ComponentModel.dll" Source="$(var.BuildSourceDir)\System.ComponentModel.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_65" Guid="F06374FC-ED82-4AD9-BA08-000000000065" Win64="yes">
+        <File Id="File_System_ComponentModel_EventBasedAsync_dll" Name="System.ComponentModel.EventBasedAsync.dll" Source="$(var.BuildSourceDir)\System.ComponentModel.EventBasedAsync.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_66" Guid="F06374FC-ED82-4AD9-BA08-000000000066" Win64="yes">
+        <File Id="File_System_ComponentModel_Primitives_dll" Name="System.ComponentModel.Primitives.dll" Source="$(var.BuildSourceDir)\System.ComponentModel.Primitives.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_67" Guid="F06374FC-ED82-4AD9-BA08-000000000067" Win64="yes">
+        <File Id="File_System_ComponentModel_TypeConverter_dll" Name="System.ComponentModel.TypeConverter.dll" Source="$(var.BuildSourceDir)\System.ComponentModel.TypeConverter.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_68" Guid="F06374FC-ED82-4AD9-BA08-000000000068" Win64="yes">
+        <File Id="File_System_Configuration_ConfigurationManager_dll" Name="System.Configuration.ConfigurationManager.dll" Source="$(var.BuildSourceDir)\System.Configuration.ConfigurationManager.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_69" Guid="F06374FC-ED82-4AD9-BA08-000000000069" Win64="yes">
+        <File Id="File_System_Configuration_dll" Name="System.Configuration.dll" Source="$(var.BuildSourceDir)\System.Configuration.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_70" Guid="F06374FC-ED82-4AD9-BA08-000000000070" Win64="yes">
+        <File Id="File_System_Console_dll" Name="System.Console.dll" Source="$(var.BuildSourceDir)\System.Console.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_71" Guid="F06374FC-ED82-4AD9-BA08-000000000071" Win64="yes">
+        <File Id="File_System_Core_dll" Name="System.Core.dll" Source="$(var.BuildSourceDir)\System.Core.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_72" Guid="F06374FC-ED82-4AD9-BA08-000000000072" Win64="yes">
+        <File Id="File_System_Data_Common_dll" Name="System.Data.Common.dll" Source="$(var.BuildSourceDir)\System.Data.Common.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_73" Guid="F06374FC-ED82-4AD9-BA08-000000000073" Win64="yes">
+        <File Id="File_System_Data_DataSetExtensions_dll" Name="System.Data.DataSetExtensions.dll" Source="$(var.BuildSourceDir)\System.Data.DataSetExtensions.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_74" Guid="F06374FC-ED82-4AD9-BA08-000000000074" Win64="yes">
+        <File Id="File_System_Data_dll" Name="System.Data.dll" Source="$(var.BuildSourceDir)\System.Data.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_75" Guid="F06374FC-ED82-4AD9-BA08-000000000075" Win64="yes">
+        <File Id="File_System_Design_dll" Name="System.Design.dll" Source="$(var.BuildSourceDir)\System.Design.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_76" Guid="F06374FC-ED82-4AD9-BA08-000000000076" Win64="yes">
+        <File Id="File_System_Diagnostics_Contracts_dll" Name="System.Diagnostics.Contracts.dll" Source="$(var.BuildSourceDir)\System.Diagnostics.Contracts.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_77" Guid="F06374FC-ED82-4AD9-BA08-000000000077" Win64="yes">
+        <File Id="File_System_Diagnostics_Debug_dll" Name="System.Diagnostics.Debug.dll" Source="$(var.BuildSourceDir)\System.Diagnostics.Debug.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_78" Guid="F06374FC-ED82-4AD9-BA08-000000000078" Win64="yes">
+        <File Id="File_System_Diagnostics_DiagnosticSource_dll" Name="System.Diagnostics.DiagnosticSource.dll" Source="$(var.BuildSourceDir)\System.Diagnostics.DiagnosticSource.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_79" Guid="F06374FC-ED82-4AD9-BA08-000000000079" Win64="yes">
+        <File Id="File_System_Diagnostics_EventLog_dll" Name="System.Diagnostics.EventLog.dll" Source="$(var.BuildSourceDir)\System.Diagnostics.EventLog.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_80" Guid="F06374FC-ED82-4AD9-BA08-000000000080" Win64="yes">
+        <File Id="File_System_Diagnostics_EventLog_Messages_dll" Name="System.Diagnostics.EventLog.Messages.dll" Source="$(var.BuildSourceDir)\System.Diagnostics.EventLog.Messages.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_81" Guid="F06374FC-ED82-4AD9-BA08-000000000081" Win64="yes">
+        <File Id="File_System_Diagnostics_FileVersionInfo_dll" Name="System.Diagnostics.FileVersionInfo.dll" Source="$(var.BuildSourceDir)\System.Diagnostics.FileVersionInfo.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_82" Guid="F06374FC-ED82-4AD9-BA08-000000000082" Win64="yes">
+        <File Id="File_System_Diagnostics_PerformanceCounter_dll" Name="System.Diagnostics.PerformanceCounter.dll" Source="$(var.BuildSourceDir)\System.Diagnostics.PerformanceCounter.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_83" Guid="F06374FC-ED82-4AD9-BA08-000000000083" Win64="yes">
+        <File Id="File_System_Diagnostics_Process_dll" Name="System.Diagnostics.Process.dll" Source="$(var.BuildSourceDir)\System.Diagnostics.Process.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_84" Guid="F06374FC-ED82-4AD9-BA08-000000000084" Win64="yes">
+        <File Id="File_System_Diagnostics_StackTrace_dll" Name="System.Diagnostics.StackTrace.dll" Source="$(var.BuildSourceDir)\System.Diagnostics.StackTrace.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_85" Guid="F06374FC-ED82-4AD9-BA08-000000000085" Win64="yes">
+        <File Id="File_System_Diagnostics_TextWriterTraceListener_dll" Name="System.Diagnostics.TextWriterTraceListener.dll" Source="$(var.BuildSourceDir)\System.Diagnostics.TextWriterTraceListener.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_86" Guid="F06374FC-ED82-4AD9-BA08-000000000086" Win64="yes">
+        <File Id="File_System_Diagnostics_Tools_dll" Name="System.Diagnostics.Tools.dll" Source="$(var.BuildSourceDir)\System.Diagnostics.Tools.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_87" Guid="F06374FC-ED82-4AD9-BA08-000000000087" Win64="yes">
+        <File Id="File_System_Diagnostics_TraceSource_dll" Name="System.Diagnostics.TraceSource.dll" Source="$(var.BuildSourceDir)\System.Diagnostics.TraceSource.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_88" Guid="F06374FC-ED82-4AD9-BA08-000000000088" Win64="yes">
+        <File Id="File_System_Diagnostics_Tracing_dll" Name="System.Diagnostics.Tracing.dll" Source="$(var.BuildSourceDir)\System.Diagnostics.Tracing.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_89" Guid="F06374FC-ED82-4AD9-BA08-000000000089" Win64="yes">
+        <File Id="File_System_DirectoryServices_dll" Name="System.DirectoryServices.dll" Source="$(var.BuildSourceDir)\System.DirectoryServices.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_90" Guid="F06374FC-ED82-4AD9-BA08-000000000090" Win64="yes">
+        <File Id="File_System_dll" Name="System.dll" Source="$(var.BuildSourceDir)\System.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_91" Guid="F06374FC-ED82-4AD9-BA08-000000000091" Win64="yes">
+        <File Id="File_System_Drawing_Common_dll" Name="System.Drawing.Common.dll" Source="$(var.BuildSourceDir)\System.Drawing.Common.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_92" Guid="F06374FC-ED82-4AD9-BA08-000000000092" Win64="yes">
+        <File Id="File_System_Drawing_Design_dll" Name="System.Drawing.Design.dll" Source="$(var.BuildSourceDir)\System.Drawing.Design.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_93" Guid="F06374FC-ED82-4AD9-BA08-000000000093" Win64="yes">
+        <File Id="File_System_Drawing_dll" Name="System.Drawing.dll" Source="$(var.BuildSourceDir)\System.Drawing.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_94" Guid="F06374FC-ED82-4AD9-BA08-000000000094" Win64="yes">
+        <File Id="File_System_Drawing_Primitives_dll" Name="System.Drawing.Primitives.dll" Source="$(var.BuildSourceDir)\System.Drawing.Primitives.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_95" Guid="F06374FC-ED82-4AD9-BA08-000000000095" Win64="yes">
+        <File Id="File_System_Dynamic_Runtime_dll" Name="System.Dynamic.Runtime.dll" Source="$(var.BuildSourceDir)\System.Dynamic.Runtime.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_96" Guid="F06374FC-ED82-4AD9-BA08-000000000096" Win64="yes">
+        <File Id="File_System_Formats_Asn1_dll" Name="System.Formats.Asn1.dll" Source="$(var.BuildSourceDir)\System.Formats.Asn1.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_97" Guid="F06374FC-ED82-4AD9-BA08-000000000097" Win64="yes">
+        <File Id="File_System_Formats_Nrbf_dll" Name="System.Formats.Nrbf.dll" Source="$(var.BuildSourceDir)\System.Formats.Nrbf.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_98" Guid="F06374FC-ED82-4AD9-BA08-000000000098" Win64="yes">
+        <File Id="File_System_Formats_Tar_dll" Name="System.Formats.Tar.dll" Source="$(var.BuildSourceDir)\System.Formats.Tar.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_99" Guid="F06374FC-ED82-4AD9-BA08-000000000099" Win64="yes">
+        <File Id="File_System_Globalization_Calendars_dll" Name="System.Globalization.Calendars.dll" Source="$(var.BuildSourceDir)\System.Globalization.Calendars.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_100" Guid="F06374FC-ED82-4AD9-BA08-000000000100" Win64="yes">
+        <File Id="File_System_Globalization_dll" Name="System.Globalization.dll" Source="$(var.BuildSourceDir)\System.Globalization.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_101" Guid="F06374FC-ED82-4AD9-BA08-000000000101" Win64="yes">
+        <File Id="File_System_Globalization_Extensions_dll" Name="System.Globalization.Extensions.dll" Source="$(var.BuildSourceDir)\System.Globalization.Extensions.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_102" Guid="F06374FC-ED82-4AD9-BA08-000000000102" Win64="yes">
+        <File Id="File_System_IO_Compression_Brotli_dll" Name="System.IO.Compression.Brotli.dll" Source="$(var.BuildSourceDir)\System.IO.Compression.Brotli.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_103" Guid="F06374FC-ED82-4AD9-BA08-000000000103" Win64="yes">
+        <File Id="File_System_IO_Compression_dll" Name="System.IO.Compression.dll" Source="$(var.BuildSourceDir)\System.IO.Compression.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_104" Guid="F06374FC-ED82-4AD9-BA08-000000000104" Win64="yes">
+        <File Id="File_System_IO_Compression_FileSystem_dll" Name="System.IO.Compression.FileSystem.dll" Source="$(var.BuildSourceDir)\System.IO.Compression.FileSystem.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_105" Guid="F06374FC-ED82-4AD9-BA08-000000000105" Win64="yes">
+        <File Id="File_System_IO_Compression_Native_dll" Name="System.IO.Compression.Native.dll" Source="$(var.BuildSourceDir)\System.IO.Compression.Native.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_106" Guid="F06374FC-ED82-4AD9-BA08-000000000106" Win64="yes">
+        <File Id="File_System_IO_Compression_ZipFile_dll" Name="System.IO.Compression.ZipFile.dll" Source="$(var.BuildSourceDir)\System.IO.Compression.ZipFile.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_107" Guid="F06374FC-ED82-4AD9-BA08-000000000107" Win64="yes">
+        <File Id="File_System_IO_dll" Name="System.IO.dll" Source="$(var.BuildSourceDir)\System.IO.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_108" Guid="F06374FC-ED82-4AD9-BA08-000000000108" Win64="yes">
+        <File Id="File_System_IO_FileSystem_AccessControl_dll" Name="System.IO.FileSystem.AccessControl.dll" Source="$(var.BuildSourceDir)\System.IO.FileSystem.AccessControl.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_109" Guid="F06374FC-ED82-4AD9-BA08-000000000109" Win64="yes">
+        <File Id="File_System_IO_FileSystem_dll" Name="System.IO.FileSystem.dll" Source="$(var.BuildSourceDir)\System.IO.FileSystem.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_110" Guid="F06374FC-ED82-4AD9-BA08-000000000110" Win64="yes">
+        <File Id="File_System_IO_FileSystem_DriveInfo_dll" Name="System.IO.FileSystem.DriveInfo.dll" Source="$(var.BuildSourceDir)\System.IO.FileSystem.DriveInfo.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_111" Guid="F06374FC-ED82-4AD9-BA08-000000000111" Win64="yes">
+        <File Id="File_System_IO_FileSystem_Primitives_dll" Name="System.IO.FileSystem.Primitives.dll" Source="$(var.BuildSourceDir)\System.IO.FileSystem.Primitives.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_112" Guid="F06374FC-ED82-4AD9-BA08-000000000112" Win64="yes">
+        <File Id="File_System_IO_FileSystem_Watcher_dll" Name="System.IO.FileSystem.Watcher.dll" Source="$(var.BuildSourceDir)\System.IO.FileSystem.Watcher.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_113" Guid="F06374FC-ED82-4AD9-BA08-000000000113" Win64="yes">
+        <File Id="File_System_IO_IsolatedStorage_dll" Name="System.IO.IsolatedStorage.dll" Source="$(var.BuildSourceDir)\System.IO.IsolatedStorage.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_114" Guid="F06374FC-ED82-4AD9-BA08-000000000114" Win64="yes">
+        <File Id="File_System_IO_MemoryMappedFiles_dll" Name="System.IO.MemoryMappedFiles.dll" Source="$(var.BuildSourceDir)\System.IO.MemoryMappedFiles.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_115" Guid="F06374FC-ED82-4AD9-BA08-000000000115" Win64="yes">
+        <File Id="File_System_IO_Packaging_dll" Name="System.IO.Packaging.dll" Source="$(var.BuildSourceDir)\System.IO.Packaging.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_116" Guid="F06374FC-ED82-4AD9-BA08-000000000116" Win64="yes">
+        <File Id="File_System_IO_Pipelines_dll" Name="System.IO.Pipelines.dll" Source="$(var.BuildSourceDir)\System.IO.Pipelines.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_117" Guid="F06374FC-ED82-4AD9-BA08-000000000117" Win64="yes">
+        <File Id="File_System_IO_Pipes_AccessControl_dll" Name="System.IO.Pipes.AccessControl.dll" Source="$(var.BuildSourceDir)\System.IO.Pipes.AccessControl.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_118" Guid="F06374FC-ED82-4AD9-BA08-000000000118" Win64="yes">
+        <File Id="File_System_IO_Pipes_dll" Name="System.IO.Pipes.dll" Source="$(var.BuildSourceDir)\System.IO.Pipes.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_119" Guid="F06374FC-ED82-4AD9-BA08-000000000119" Win64="yes">
+        <File Id="File_System_IO_UnmanagedMemoryStream_dll" Name="System.IO.UnmanagedMemoryStream.dll" Source="$(var.BuildSourceDir)\System.IO.UnmanagedMemoryStream.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_120" Guid="F06374FC-ED82-4AD9-BA08-000000000120" Win64="yes">
+        <File Id="File_System_Linq_AsyncEnumerable_dll" Name="System.Linq.AsyncEnumerable.dll" Source="$(var.BuildSourceDir)\System.Linq.AsyncEnumerable.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_121" Guid="F06374FC-ED82-4AD9-BA08-000000000121" Win64="yes">
+        <File Id="File_System_Linq_dll" Name="System.Linq.dll" Source="$(var.BuildSourceDir)\System.Linq.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_122" Guid="F06374FC-ED82-4AD9-BA08-000000000122" Win64="yes">
+        <File Id="File_System_Linq_Expressions_dll" Name="System.Linq.Expressions.dll" Source="$(var.BuildSourceDir)\System.Linq.Expressions.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_123" Guid="F06374FC-ED82-4AD9-BA08-000000000123" Win64="yes">
+        <File Id="File_System_Linq_Parallel_dll" Name="System.Linq.Parallel.dll" Source="$(var.BuildSourceDir)\System.Linq.Parallel.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_124" Guid="F06374FC-ED82-4AD9-BA08-000000000124" Win64="yes">
+        <File Id="File_System_Linq_Queryable_dll" Name="System.Linq.Queryable.dll" Source="$(var.BuildSourceDir)\System.Linq.Queryable.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_125" Guid="F06374FC-ED82-4AD9-BA08-000000000125" Win64="yes">
+        <File Id="File_System_Memory_dll" Name="System.Memory.dll" Source="$(var.BuildSourceDir)\System.Memory.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_126" Guid="F06374FC-ED82-4AD9-BA08-000000000126" Win64="yes">
+        <File Id="File_System_Net_dll" Name="System.Net.dll" Source="$(var.BuildSourceDir)\System.Net.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_127" Guid="F06374FC-ED82-4AD9-BA08-000000000127" Win64="yes">
+        <File Id="File_System_Net_Http_dll" Name="System.Net.Http.dll" Source="$(var.BuildSourceDir)\System.Net.Http.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_128" Guid="F06374FC-ED82-4AD9-BA08-000000000128" Win64="yes">
+        <File Id="File_System_Net_Http_Json_dll" Name="System.Net.Http.Json.dll" Source="$(var.BuildSourceDir)\System.Net.Http.Json.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_129" Guid="F06374FC-ED82-4AD9-BA08-000000000129" Win64="yes">
+        <File Id="File_System_Net_HttpListener_dll" Name="System.Net.HttpListener.dll" Source="$(var.BuildSourceDir)\System.Net.HttpListener.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_130" Guid="F06374FC-ED82-4AD9-BA08-000000000130" Win64="yes">
+        <File Id="File_System_Net_Mail_dll" Name="System.Net.Mail.dll" Source="$(var.BuildSourceDir)\System.Net.Mail.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_131" Guid="F06374FC-ED82-4AD9-BA08-000000000131" Win64="yes">
+        <File Id="File_System_Net_NameResolution_dll" Name="System.Net.NameResolution.dll" Source="$(var.BuildSourceDir)\System.Net.NameResolution.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_132" Guid="F06374FC-ED82-4AD9-BA08-000000000132" Win64="yes">
+        <File Id="File_System_Net_NetworkInformation_dll" Name="System.Net.NetworkInformation.dll" Source="$(var.BuildSourceDir)\System.Net.NetworkInformation.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_133" Guid="F06374FC-ED82-4AD9-BA08-000000000133" Win64="yes">
+        <File Id="File_System_Net_Ping_dll" Name="System.Net.Ping.dll" Source="$(var.BuildSourceDir)\System.Net.Ping.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_134" Guid="F06374FC-ED82-4AD9-BA08-000000000134" Win64="yes">
+        <File Id="File_System_Net_Primitives_dll" Name="System.Net.Primitives.dll" Source="$(var.BuildSourceDir)\System.Net.Primitives.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_135" Guid="F06374FC-ED82-4AD9-BA08-000000000135" Win64="yes">
+        <File Id="File_System_Net_Quic_dll" Name="System.Net.Quic.dll" Source="$(var.BuildSourceDir)\System.Net.Quic.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_136" Guid="F06374FC-ED82-4AD9-BA08-000000000136" Win64="yes">
+        <File Id="File_System_Net_Requests_dll" Name="System.Net.Requests.dll" Source="$(var.BuildSourceDir)\System.Net.Requests.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_137" Guid="F06374FC-ED82-4AD9-BA08-000000000137" Win64="yes">
+        <File Id="File_System_Net_Security_dll" Name="System.Net.Security.dll" Source="$(var.BuildSourceDir)\System.Net.Security.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_138" Guid="F06374FC-ED82-4AD9-BA08-000000000138" Win64="yes">
+        <File Id="File_System_Net_ServerSentEvents_dll" Name="System.Net.ServerSentEvents.dll" Source="$(var.BuildSourceDir)\System.Net.ServerSentEvents.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_139" Guid="F06374FC-ED82-4AD9-BA08-000000000139" Win64="yes">
+        <File Id="File_System_Net_ServicePoint_dll" Name="System.Net.ServicePoint.dll" Source="$(var.BuildSourceDir)\System.Net.ServicePoint.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_140" Guid="F06374FC-ED82-4AD9-BA08-000000000140" Win64="yes">
+        <File Id="File_System_Net_Sockets_dll" Name="System.Net.Sockets.dll" Source="$(var.BuildSourceDir)\System.Net.Sockets.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_141" Guid="F06374FC-ED82-4AD9-BA08-000000000141" Win64="yes">
+        <File Id="File_System_Net_WebClient_dll" Name="System.Net.WebClient.dll" Source="$(var.BuildSourceDir)\System.Net.WebClient.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_142" Guid="F06374FC-ED82-4AD9-BA08-000000000142" Win64="yes">
+        <File Id="File_System_Net_WebHeaderCollection_dll" Name="System.Net.WebHeaderCollection.dll" Source="$(var.BuildSourceDir)\System.Net.WebHeaderCollection.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_143" Guid="F06374FC-ED82-4AD9-BA08-000000000143" Win64="yes">
+        <File Id="File_System_Net_WebProxy_dll" Name="System.Net.WebProxy.dll" Source="$(var.BuildSourceDir)\System.Net.WebProxy.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_144" Guid="F06374FC-ED82-4AD9-BA08-000000000144" Win64="yes">
+        <File Id="File_System_Net_WebSockets_Client_dll" Name="System.Net.WebSockets.Client.dll" Source="$(var.BuildSourceDir)\System.Net.WebSockets.Client.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_145" Guid="F06374FC-ED82-4AD9-BA08-000000000145" Win64="yes">
+        <File Id="File_System_Net_WebSockets_dll" Name="System.Net.WebSockets.dll" Source="$(var.BuildSourceDir)\System.Net.WebSockets.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_146" Guid="F06374FC-ED82-4AD9-BA08-000000000146" Win64="yes">
+        <File Id="File_System_Numerics_dll" Name="System.Numerics.dll" Source="$(var.BuildSourceDir)\System.Numerics.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_147" Guid="F06374FC-ED82-4AD9-BA08-000000000147" Win64="yes">
+        <File Id="File_System_Numerics_Vectors_dll" Name="System.Numerics.Vectors.dll" Source="$(var.BuildSourceDir)\System.Numerics.Vectors.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_148" Guid="F06374FC-ED82-4AD9-BA08-000000000148" Win64="yes">
+        <File Id="File_System_ObjectModel_dll" Name="System.ObjectModel.dll" Source="$(var.BuildSourceDir)\System.ObjectModel.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_149" Guid="F06374FC-ED82-4AD9-BA08-000000000149" Win64="yes">
+        <File Id="File_System_Printing_dll" Name="System.Printing.dll" Source="$(var.BuildSourceDir)\System.Printing.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_150" Guid="F06374FC-ED82-4AD9-BA08-000000000150" Win64="yes">
+        <File Id="File_System_Private_CoreLib_dll" Name="System.Private.CoreLib.dll" Source="$(var.BuildSourceDir)\System.Private.CoreLib.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_151" Guid="F06374FC-ED82-4AD9-BA08-000000000151" Win64="yes">
+        <File Id="File_System_Private_DataContractSerialization_dll" Name="System.Private.DataContractSerialization.dll" Source="$(var.BuildSourceDir)\System.Private.DataContractSerialization.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_152" Guid="F06374FC-ED82-4AD9-BA08-000000000152" Win64="yes">
+        <File Id="File_System_Private_Uri_dll" Name="System.Private.Uri.dll" Source="$(var.BuildSourceDir)\System.Private.Uri.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_153" Guid="F06374FC-ED82-4AD9-BA08-000000000153" Win64="yes">
+        <File Id="File_System_Private_Windows_Core_dll" Name="System.Private.Windows.Core.dll" Source="$(var.BuildSourceDir)\System.Private.Windows.Core.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_154" Guid="F06374FC-ED82-4AD9-BA08-000000000154" Win64="yes">
+        <File Id="File_System_Private_Windows_GdiPlus_dll" Name="System.Private.Windows.GdiPlus.dll" Source="$(var.BuildSourceDir)\System.Private.Windows.GdiPlus.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_155" Guid="F06374FC-ED82-4AD9-BA08-000000000155" Win64="yes">
+        <File Id="File_System_Private_Xml_dll" Name="System.Private.Xml.dll" Source="$(var.BuildSourceDir)\System.Private.Xml.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_156" Guid="F06374FC-ED82-4AD9-BA08-000000000156" Win64="yes">
+        <File Id="File_System_Private_Xml_Linq_dll" Name="System.Private.Xml.Linq.dll" Source="$(var.BuildSourceDir)\System.Private.Xml.Linq.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_157" Guid="F06374FC-ED82-4AD9-BA08-000000000157" Win64="yes">
+        <File Id="File_System_Reflection_DispatchProxy_dll" Name="System.Reflection.DispatchProxy.dll" Source="$(var.BuildSourceDir)\System.Reflection.DispatchProxy.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_158" Guid="F06374FC-ED82-4AD9-BA08-000000000158" Win64="yes">
+        <File Id="File_System_Reflection_dll" Name="System.Reflection.dll" Source="$(var.BuildSourceDir)\System.Reflection.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_159" Guid="F06374FC-ED82-4AD9-BA08-000000000159" Win64="yes">
+        <File Id="File_System_Reflection_Emit_dll" Name="System.Reflection.Emit.dll" Source="$(var.BuildSourceDir)\System.Reflection.Emit.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_160" Guid="F06374FC-ED82-4AD9-BA08-000000000160" Win64="yes">
+        <File Id="File_System_Reflection_Emit_ILGeneration_dll" Name="System.Reflection.Emit.ILGeneration.dll" Source="$(var.BuildSourceDir)\System.Reflection.Emit.ILGeneration.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_161" Guid="F06374FC-ED82-4AD9-BA08-000000000161" Win64="yes">
+        <File Id="File_System_Reflection_Emit_Lightweight_dll" Name="System.Reflection.Emit.Lightweight.dll" Source="$(var.BuildSourceDir)\System.Reflection.Emit.Lightweight.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_162" Guid="F06374FC-ED82-4AD9-BA08-000000000162" Win64="yes">
+        <File Id="File_System_Reflection_Extensions_dll" Name="System.Reflection.Extensions.dll" Source="$(var.BuildSourceDir)\System.Reflection.Extensions.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_163" Guid="F06374FC-ED82-4AD9-BA08-000000000163" Win64="yes">
+        <File Id="File_System_Reflection_Metadata_dll" Name="System.Reflection.Metadata.dll" Source="$(var.BuildSourceDir)\System.Reflection.Metadata.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_164" Guid="F06374FC-ED82-4AD9-BA08-000000000164" Win64="yes">
+        <File Id="File_System_Reflection_Primitives_dll" Name="System.Reflection.Primitives.dll" Source="$(var.BuildSourceDir)\System.Reflection.Primitives.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_165" Guid="F06374FC-ED82-4AD9-BA08-000000000165" Win64="yes">
+        <File Id="File_System_Reflection_TypeExtensions_dll" Name="System.Reflection.TypeExtensions.dll" Source="$(var.BuildSourceDir)\System.Reflection.TypeExtensions.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_166" Guid="F06374FC-ED82-4AD9-BA08-000000000166" Win64="yes">
+        <File Id="File_System_Resources_Extensions_dll" Name="System.Resources.Extensions.dll" Source="$(var.BuildSourceDir)\System.Resources.Extensions.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_167" Guid="F06374FC-ED82-4AD9-BA08-000000000167" Win64="yes">
+        <File Id="File_System_Resources_Reader_dll" Name="System.Resources.Reader.dll" Source="$(var.BuildSourceDir)\System.Resources.Reader.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_168" Guid="F06374FC-ED82-4AD9-BA08-000000000168" Win64="yes">
+        <File Id="File_System_Resources_ResourceManager_dll" Name="System.Resources.ResourceManager.dll" Source="$(var.BuildSourceDir)\System.Resources.ResourceManager.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_169" Guid="F06374FC-ED82-4AD9-BA08-000000000169" Win64="yes">
+        <File Id="File_System_Resources_Writer_dll" Name="System.Resources.Writer.dll" Source="$(var.BuildSourceDir)\System.Resources.Writer.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_170" Guid="F06374FC-ED82-4AD9-BA08-000000000170" Win64="yes">
+        <File Id="File_System_Runtime_CompilerServices_Unsafe_dll" Name="System.Runtime.CompilerServices.Unsafe.dll" Source="$(var.BuildSourceDir)\System.Runtime.CompilerServices.Unsafe.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_171" Guid="F06374FC-ED82-4AD9-BA08-000000000171" Win64="yes">
+        <File Id="File_System_Runtime_CompilerServices_VisualC_dll" Name="System.Runtime.CompilerServices.VisualC.dll" Source="$(var.BuildSourceDir)\System.Runtime.CompilerServices.VisualC.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_172" Guid="F06374FC-ED82-4AD9-BA08-000000000172" Win64="yes">
+        <File Id="File_System_Runtime_dll" Name="System.Runtime.dll" Source="$(var.BuildSourceDir)\System.Runtime.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_173" Guid="F06374FC-ED82-4AD9-BA08-000000000173" Win64="yes">
+        <File Id="File_System_Runtime_Extensions_dll" Name="System.Runtime.Extensions.dll" Source="$(var.BuildSourceDir)\System.Runtime.Extensions.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_174" Guid="F06374FC-ED82-4AD9-BA08-000000000174" Win64="yes">
+        <File Id="File_System_Runtime_Handles_dll" Name="System.Runtime.Handles.dll" Source="$(var.BuildSourceDir)\System.Runtime.Handles.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_175" Guid="F06374FC-ED82-4AD9-BA08-000000000175" Win64="yes">
+        <File Id="File_System_Runtime_InteropServices_dll" Name="System.Runtime.InteropServices.dll" Source="$(var.BuildSourceDir)\System.Runtime.InteropServices.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_176" Guid="F06374FC-ED82-4AD9-BA08-000000000176" Win64="yes">
+        <File Id="File_System_Runtime_InteropServices_JavaScript_dll" Name="System.Runtime.InteropServices.JavaScript.dll" Source="$(var.BuildSourceDir)\System.Runtime.InteropServices.JavaScript.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_177" Guid="F06374FC-ED82-4AD9-BA08-000000000177" Win64="yes">
+        <File Id="File_System_Runtime_InteropServices_RuntimeInformation_dll" Name="System.Runtime.InteropServices.RuntimeInformation.dll" Source="$(var.BuildSourceDir)\System.Runtime.InteropServices.RuntimeInformation.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_178" Guid="F06374FC-ED82-4AD9-BA08-000000000178" Win64="yes">
+        <File Id="File_System_Runtime_Intrinsics_dll" Name="System.Runtime.Intrinsics.dll" Source="$(var.BuildSourceDir)\System.Runtime.Intrinsics.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_179" Guid="F06374FC-ED82-4AD9-BA08-000000000179" Win64="yes">
+        <File Id="File_System_Runtime_Loader_dll" Name="System.Runtime.Loader.dll" Source="$(var.BuildSourceDir)\System.Runtime.Loader.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_180" Guid="F06374FC-ED82-4AD9-BA08-000000000180" Win64="yes">
+        <File Id="File_System_Runtime_Numerics_dll" Name="System.Runtime.Numerics.dll" Source="$(var.BuildSourceDir)\System.Runtime.Numerics.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_181" Guid="F06374FC-ED82-4AD9-BA08-000000000181" Win64="yes">
+        <File Id="File_System_Runtime_Serialization_dll" Name="System.Runtime.Serialization.dll" Source="$(var.BuildSourceDir)\System.Runtime.Serialization.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_182" Guid="F06374FC-ED82-4AD9-BA08-000000000182" Win64="yes">
+        <File Id="File_System_Runtime_Serialization_Formatters_dll" Name="System.Runtime.Serialization.Formatters.dll" Source="$(var.BuildSourceDir)\System.Runtime.Serialization.Formatters.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_183" Guid="F06374FC-ED82-4AD9-BA08-000000000183" Win64="yes">
+        <File Id="File_System_Runtime_Serialization_Json_dll" Name="System.Runtime.Serialization.Json.dll" Source="$(var.BuildSourceDir)\System.Runtime.Serialization.Json.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_184" Guid="F06374FC-ED82-4AD9-BA08-000000000184" Win64="yes">
+        <File Id="File_System_Runtime_Serialization_Primitives_dll" Name="System.Runtime.Serialization.Primitives.dll" Source="$(var.BuildSourceDir)\System.Runtime.Serialization.Primitives.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_185" Guid="F06374FC-ED82-4AD9-BA08-000000000185" Win64="yes">
+        <File Id="File_System_Runtime_Serialization_Xml_dll" Name="System.Runtime.Serialization.Xml.dll" Source="$(var.BuildSourceDir)\System.Runtime.Serialization.Xml.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_186" Guid="F06374FC-ED82-4AD9-BA08-000000000186" Win64="yes">
+        <File Id="File_System_Security_AccessControl_dll" Name="System.Security.AccessControl.dll" Source="$(var.BuildSourceDir)\System.Security.AccessControl.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_187" Guid="F06374FC-ED82-4AD9-BA08-000000000187" Win64="yes">
+        <File Id="File_System_Security_Claims_dll" Name="System.Security.Claims.dll" Source="$(var.BuildSourceDir)\System.Security.Claims.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_188" Guid="F06374FC-ED82-4AD9-BA08-000000000188" Win64="yes">
+        <File Id="File_System_Security_Cryptography_Algorithms_dll" Name="System.Security.Cryptography.Algorithms.dll" Source="$(var.BuildSourceDir)\System.Security.Cryptography.Algorithms.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_189" Guid="F06374FC-ED82-4AD9-BA08-000000000189" Win64="yes">
+        <File Id="File_System_Security_Cryptography_Cng_dll" Name="System.Security.Cryptography.Cng.dll" Source="$(var.BuildSourceDir)\System.Security.Cryptography.Cng.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_190" Guid="F06374FC-ED82-4AD9-BA08-000000000190" Win64="yes">
+        <File Id="File_System_Security_Cryptography_Csp_dll" Name="System.Security.Cryptography.Csp.dll" Source="$(var.BuildSourceDir)\System.Security.Cryptography.Csp.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_191" Guid="F06374FC-ED82-4AD9-BA08-000000000191" Win64="yes">
+        <File Id="File_System_Security_Cryptography_dll" Name="System.Security.Cryptography.dll" Source="$(var.BuildSourceDir)\System.Security.Cryptography.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_192" Guid="F06374FC-ED82-4AD9-BA08-000000000192" Win64="yes">
+        <File Id="File_System_Security_Cryptography_Encoding_dll" Name="System.Security.Cryptography.Encoding.dll" Source="$(var.BuildSourceDir)\System.Security.Cryptography.Encoding.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_193" Guid="F06374FC-ED82-4AD9-BA08-000000000193" Win64="yes">
+        <File Id="File_System_Security_Cryptography_OpenSsl_dll" Name="System.Security.Cryptography.OpenSsl.dll" Source="$(var.BuildSourceDir)\System.Security.Cryptography.OpenSsl.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_194" Guid="F06374FC-ED82-4AD9-BA08-000000000194" Win64="yes">
+        <File Id="File_System_Security_Cryptography_Pkcs_dll" Name="System.Security.Cryptography.Pkcs.dll" Source="$(var.BuildSourceDir)\System.Security.Cryptography.Pkcs.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_195" Guid="F06374FC-ED82-4AD9-BA08-000000000195" Win64="yes">
+        <File Id="File_System_Security_Cryptography_Primitives_dll" Name="System.Security.Cryptography.Primitives.dll" Source="$(var.BuildSourceDir)\System.Security.Cryptography.Primitives.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_196" Guid="F06374FC-ED82-4AD9-BA08-000000000196" Win64="yes">
+        <File Id="File_System_Security_Cryptography_ProtectedData_dll" Name="System.Security.Cryptography.ProtectedData.dll" Source="$(var.BuildSourceDir)\System.Security.Cryptography.ProtectedData.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_197" Guid="F06374FC-ED82-4AD9-BA08-000000000197" Win64="yes">
+        <File Id="File_System_Security_Cryptography_X509Certificates_dll" Name="System.Security.Cryptography.X509Certificates.dll" Source="$(var.BuildSourceDir)\System.Security.Cryptography.X509Certificates.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_198" Guid="F06374FC-ED82-4AD9-BA08-000000000198" Win64="yes">
+        <File Id="File_System_Security_Cryptography_Xml_dll" Name="System.Security.Cryptography.Xml.dll" Source="$(var.BuildSourceDir)\System.Security.Cryptography.Xml.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_199" Guid="F06374FC-ED82-4AD9-BA08-000000000199" Win64="yes">
+        <File Id="File_System_Security_dll" Name="System.Security.dll" Source="$(var.BuildSourceDir)\System.Security.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_200" Guid="F06374FC-ED82-4AD9-BA08-000000000200" Win64="yes">
+        <File Id="File_System_Security_Permissions_dll" Name="System.Security.Permissions.dll" Source="$(var.BuildSourceDir)\System.Security.Permissions.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_201" Guid="F06374FC-ED82-4AD9-BA08-000000000201" Win64="yes">
+        <File Id="File_System_Security_Principal_dll" Name="System.Security.Principal.dll" Source="$(var.BuildSourceDir)\System.Security.Principal.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_202" Guid="F06374FC-ED82-4AD9-BA08-000000000202" Win64="yes">
+        <File Id="File_System_Security_Principal_Windows_dll" Name="System.Security.Principal.Windows.dll" Source="$(var.BuildSourceDir)\System.Security.Principal.Windows.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_203" Guid="F06374FC-ED82-4AD9-BA08-000000000203" Win64="yes">
+        <File Id="File_System_Security_SecureString_dll" Name="System.Security.SecureString.dll" Source="$(var.BuildSourceDir)\System.Security.SecureString.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_204" Guid="F06374FC-ED82-4AD9-BA08-000000000204" Win64="yes">
+        <File Id="File_System_ServiceModel_Web_dll" Name="System.ServiceModel.Web.dll" Source="$(var.BuildSourceDir)\System.ServiceModel.Web.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_205" Guid="F06374FC-ED82-4AD9-BA08-000000000205" Win64="yes">
+        <File Id="File_System_ServiceProcess_dll" Name="System.ServiceProcess.dll" Source="$(var.BuildSourceDir)\System.ServiceProcess.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_206" Guid="F06374FC-ED82-4AD9-BA08-000000000206" Win64="yes">
+        <File Id="File_System_Text_Encoding_CodePages_dll" Name="System.Text.Encoding.CodePages.dll" Source="$(var.BuildSourceDir)\System.Text.Encoding.CodePages.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_207" Guid="F06374FC-ED82-4AD9-BA08-000000000207" Win64="yes">
+        <File Id="File_System_Text_Encoding_dll" Name="System.Text.Encoding.dll" Source="$(var.BuildSourceDir)\System.Text.Encoding.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_208" Guid="F06374FC-ED82-4AD9-BA08-000000000208" Win64="yes">
+        <File Id="File_System_Text_Encoding_Extensions_dll" Name="System.Text.Encoding.Extensions.dll" Source="$(var.BuildSourceDir)\System.Text.Encoding.Extensions.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_209" Guid="F06374FC-ED82-4AD9-BA08-000000000209" Win64="yes">
+        <File Id="File_System_Text_Encodings_Web_dll" Name="System.Text.Encodings.Web.dll" Source="$(var.BuildSourceDir)\System.Text.Encodings.Web.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_210" Guid="F06374FC-ED82-4AD9-BA08-000000000210" Win64="yes">
+        <File Id="File_System_Text_Json_dll" Name="System.Text.Json.dll" Source="$(var.BuildSourceDir)\System.Text.Json.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_211" Guid="F06374FC-ED82-4AD9-BA08-000000000211" Win64="yes">
+        <File Id="File_System_Text_RegularExpressions_dll" Name="System.Text.RegularExpressions.dll" Source="$(var.BuildSourceDir)\System.Text.RegularExpressions.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_212" Guid="F06374FC-ED82-4AD9-BA08-000000000212" Win64="yes">
+        <File Id="File_System_Threading_AccessControl_dll" Name="System.Threading.AccessControl.dll" Source="$(var.BuildSourceDir)\System.Threading.AccessControl.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_213" Guid="F06374FC-ED82-4AD9-BA08-000000000213" Win64="yes">
+        <File Id="File_System_Threading_Channels_dll" Name="System.Threading.Channels.dll" Source="$(var.BuildSourceDir)\System.Threading.Channels.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_214" Guid="F06374FC-ED82-4AD9-BA08-000000000214" Win64="yes">
+        <File Id="File_System_Threading_dll" Name="System.Threading.dll" Source="$(var.BuildSourceDir)\System.Threading.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_215" Guid="F06374FC-ED82-4AD9-BA08-000000000215" Win64="yes">
+        <File Id="File_System_Threading_Overlapped_dll" Name="System.Threading.Overlapped.dll" Source="$(var.BuildSourceDir)\System.Threading.Overlapped.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_216" Guid="F06374FC-ED82-4AD9-BA08-000000000216" Win64="yes">
+        <File Id="File_System_Threading_Tasks_Dataflow_dll" Name="System.Threading.Tasks.Dataflow.dll" Source="$(var.BuildSourceDir)\System.Threading.Tasks.Dataflow.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_217" Guid="F06374FC-ED82-4AD9-BA08-000000000217" Win64="yes">
+        <File Id="File_System_Threading_Tasks_dll" Name="System.Threading.Tasks.dll" Source="$(var.BuildSourceDir)\System.Threading.Tasks.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_218" Guid="F06374FC-ED82-4AD9-BA08-000000000218" Win64="yes">
+        <File Id="File_System_Threading_Tasks_Extensions_dll" Name="System.Threading.Tasks.Extensions.dll" Source="$(var.BuildSourceDir)\System.Threading.Tasks.Extensions.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_219" Guid="F06374FC-ED82-4AD9-BA08-000000000219" Win64="yes">
+        <File Id="File_System_Threading_Tasks_Parallel_dll" Name="System.Threading.Tasks.Parallel.dll" Source="$(var.BuildSourceDir)\System.Threading.Tasks.Parallel.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_220" Guid="F06374FC-ED82-4AD9-BA08-000000000220" Win64="yes">
+        <File Id="File_System_Threading_Thread_dll" Name="System.Threading.Thread.dll" Source="$(var.BuildSourceDir)\System.Threading.Thread.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_221" Guid="F06374FC-ED82-4AD9-BA08-000000000221" Win64="yes">
+        <File Id="File_System_Threading_ThreadPool_dll" Name="System.Threading.ThreadPool.dll" Source="$(var.BuildSourceDir)\System.Threading.ThreadPool.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_222" Guid="F06374FC-ED82-4AD9-BA08-000000000222" Win64="yes">
+        <File Id="File_System_Threading_Timer_dll" Name="System.Threading.Timer.dll" Source="$(var.BuildSourceDir)\System.Threading.Timer.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_223" Guid="F06374FC-ED82-4AD9-BA08-000000000223" Win64="yes">
+        <File Id="File_System_Transactions_dll" Name="System.Transactions.dll" Source="$(var.BuildSourceDir)\System.Transactions.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_224" Guid="F06374FC-ED82-4AD9-BA08-000000000224" Win64="yes">
+        <File Id="File_System_Transactions_Local_dll" Name="System.Transactions.Local.dll" Source="$(var.BuildSourceDir)\System.Transactions.Local.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_225" Guid="F06374FC-ED82-4AD9-BA08-000000000225" Win64="yes">
+        <File Id="File_System_ValueTuple_dll" Name="System.ValueTuple.dll" Source="$(var.BuildSourceDir)\System.ValueTuple.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_226" Guid="F06374FC-ED82-4AD9-BA08-000000000226" Win64="yes">
+        <File Id="File_System_Web_dll" Name="System.Web.dll" Source="$(var.BuildSourceDir)\System.Web.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_227" Guid="F06374FC-ED82-4AD9-BA08-000000000227" Win64="yes">
+        <File Id="File_System_Web_HttpUtility_dll" Name="System.Web.HttpUtility.dll" Source="$(var.BuildSourceDir)\System.Web.HttpUtility.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_228" Guid="F06374FC-ED82-4AD9-BA08-000000000228" Win64="yes">
+        <File Id="File_System_Windows_Controls_Ribbon_dll" Name="System.Windows.Controls.Ribbon.dll" Source="$(var.BuildSourceDir)\System.Windows.Controls.Ribbon.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_229" Guid="F06374FC-ED82-4AD9-BA08-000000000229" Win64="yes">
+        <File Id="File_System_Windows_dll" Name="System.Windows.dll" Source="$(var.BuildSourceDir)\System.Windows.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_230" Guid="F06374FC-ED82-4AD9-BA08-000000000230" Win64="yes">
+        <File Id="File_System_Windows_Extensions_dll" Name="System.Windows.Extensions.dll" Source="$(var.BuildSourceDir)\System.Windows.Extensions.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_231" Guid="F06374FC-ED82-4AD9-BA08-000000000231" Win64="yes">
+        <File Id="File_System_Windows_Forms_Design_dll" Name="System.Windows.Forms.Design.dll" Source="$(var.BuildSourceDir)\System.Windows.Forms.Design.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_232" Guid="F06374FC-ED82-4AD9-BA08-000000000232" Win64="yes">
+        <File Id="File_System_Windows_Forms_Design_Editors_dll" Name="System.Windows.Forms.Design.Editors.dll" Source="$(var.BuildSourceDir)\System.Windows.Forms.Design.Editors.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_233" Guid="F06374FC-ED82-4AD9-BA08-000000000233" Win64="yes">
+        <File Id="File_System_Windows_Forms_dll" Name="System.Windows.Forms.dll" Source="$(var.BuildSourceDir)\System.Windows.Forms.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_234" Guid="F06374FC-ED82-4AD9-BA08-000000000234" Win64="yes">
+        <File Id="File_System_Windows_Forms_Primitives_dll" Name="System.Windows.Forms.Primitives.dll" Source="$(var.BuildSourceDir)\System.Windows.Forms.Primitives.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_235" Guid="F06374FC-ED82-4AD9-BA08-000000000235" Win64="yes">
+        <File Id="File_System_Windows_Input_Manipulations_dll" Name="System.Windows.Input.Manipulations.dll" Source="$(var.BuildSourceDir)\System.Windows.Input.Manipulations.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_236" Guid="F06374FC-ED82-4AD9-BA08-000000000236" Win64="yes">
+        <File Id="File_System_Windows_Presentation_dll" Name="System.Windows.Presentation.dll" Source="$(var.BuildSourceDir)\System.Windows.Presentation.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_237" Guid="F06374FC-ED82-4AD9-BA08-000000000237" Win64="yes">
+        <File Id="File_System_Windows_Primitives_dll" Name="System.Windows.Primitives.dll" Source="$(var.BuildSourceDir)\System.Windows.Primitives.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_238" Guid="F06374FC-ED82-4AD9-BA08-000000000238" Win64="yes">
+        <File Id="File_System_Xaml_dll" Name="System.Xaml.dll" Source="$(var.BuildSourceDir)\System.Xaml.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_239" Guid="F06374FC-ED82-4AD9-BA08-000000000239" Win64="yes">
+        <File Id="File_System_Xml_dll" Name="System.Xml.dll" Source="$(var.BuildSourceDir)\System.Xml.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_240" Guid="F06374FC-ED82-4AD9-BA08-000000000240" Win64="yes">
+        <File Id="File_System_Xml_Linq_dll" Name="System.Xml.Linq.dll" Source="$(var.BuildSourceDir)\System.Xml.Linq.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_241" Guid="F06374FC-ED82-4AD9-BA08-000000000241" Win64="yes">
+        <File Id="File_System_Xml_ReaderWriter_dll" Name="System.Xml.ReaderWriter.dll" Source="$(var.BuildSourceDir)\System.Xml.ReaderWriter.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_242" Guid="F06374FC-ED82-4AD9-BA08-000000000242" Win64="yes">
+        <File Id="File_System_Xml_Serialization_dll" Name="System.Xml.Serialization.dll" Source="$(var.BuildSourceDir)\System.Xml.Serialization.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_243" Guid="F06374FC-ED82-4AD9-BA08-000000000243" Win64="yes">
+        <File Id="File_System_Xml_XDocument_dll" Name="System.Xml.XDocument.dll" Source="$(var.BuildSourceDir)\System.Xml.XDocument.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_244" Guid="F06374FC-ED82-4AD9-BA08-000000000244" Win64="yes">
+        <File Id="File_System_Xml_XmlDocument_dll" Name="System.Xml.XmlDocument.dll" Source="$(var.BuildSourceDir)\System.Xml.XmlDocument.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_245" Guid="F06374FC-ED82-4AD9-BA08-000000000245" Win64="yes">
+        <File Id="File_System_Xml_XmlSerializer_dll" Name="System.Xml.XmlSerializer.dll" Source="$(var.BuildSourceDir)\System.Xml.XmlSerializer.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_246" Guid="F06374FC-ED82-4AD9-BA08-000000000246" Win64="yes">
+        <File Id="File_System_Xml_XPath_dll" Name="System.Xml.XPath.dll" Source="$(var.BuildSourceDir)\System.Xml.XPath.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_247" Guid="F06374FC-ED82-4AD9-BA08-000000000247" Win64="yes">
+        <File Id="File_System_Xml_XPath_XDocument_dll" Name="System.Xml.XPath.XDocument.dll" Source="$(var.BuildSourceDir)\System.Xml.XPath.XDocument.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_248" Guid="F06374FC-ED82-4AD9-BA08-000000000248" Win64="yes">
+        <File Id="File_UIAutomationClient_dll" Name="UIAutomationClient.dll" Source="$(var.BuildSourceDir)\UIAutomationClient.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_249" Guid="F06374FC-ED82-4AD9-BA08-000000000249" Win64="yes">
+        <File Id="File_UIAutomationClientSideProviders_dll" Name="UIAutomationClientSideProviders.dll" Source="$(var.BuildSourceDir)\UIAutomationClientSideProviders.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_250" Guid="F06374FC-ED82-4AD9-BA08-000000000250" Win64="yes">
+        <File Id="File_UIAutomationProvider_dll" Name="UIAutomationProvider.dll" Source="$(var.BuildSourceDir)\UIAutomationProvider.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_251" Guid="F06374FC-ED82-4AD9-BA08-000000000251" Win64="yes">
+        <File Id="File_UIAutomationTypes_dll" Name="UIAutomationTypes.dll" Source="$(var.BuildSourceDir)\UIAutomationTypes.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_252" Guid="F06374FC-ED82-4AD9-BA08-000000000252" Win64="yes">
+        <File Id="File_vcruntime140_cor3_dll" Name="vcruntime140_cor3.dll" Source="$(var.BuildSourceDir)\vcruntime140_cor3.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_253" Guid="F06374FC-ED82-4AD9-BA08-000000000253" Win64="yes">
+        <File Id="File_WindowsBase_dll" Name="WindowsBase.dll" Source="$(var.BuildSourceDir)\WindowsBase.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_254" Guid="F06374FC-ED82-4AD9-BA08-000000000254" Win64="yes">
+        <File Id="File_WindowsFormsIntegration_dll" Name="WindowsFormsIntegration.dll" Source="$(var.BuildSourceDir)\WindowsFormsIntegration.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="Comp_255" Guid="F06374FC-ED82-4AD9-BA08-000000000255" Win64="yes">
+        <File Id="File_wpfgfx_cor3_dll" Name="wpfgfx_cor3.dll" Source="$(var.BuildSourceDir)\wpfgfx_cor3.dll" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>
