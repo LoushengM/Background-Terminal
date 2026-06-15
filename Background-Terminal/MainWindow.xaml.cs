@@ -1,656 +1,848 @@
-﻿using CoreMeter;
-using Newtonsoft.Json;
-using Renci.SshNet;
-using Renci.SshNet.Common;
+using Background_Terminal.Core;
+using CoreMeter;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
+using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Management;
-using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
 
-namespace Background_Terminal {
-    public partial class MainWindow : Window {
-        // Static Fields
-        private static BrushConverter _brushConverter = new BrushConverter();
+namespace Background_Terminal;
 
-        private static DirectoryInfo _appDataDirectory = new DirectoryInfo(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BackgroundTerminal"));
-        private static string _configFile = "config.json";
-        private static string _configPath = System.IO.Path.Combine(_appDataDirectory.FullName, _configFile);
+public partial class MainWindow : Window
+{
+    private static readonly BrushConverter BrushConverter = new();
+    private static readonly string ConfigPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "BackgroundTerminal",
+        "config.json");
 
-        // TerminalWindow
-        private TerminalWindow _terminalWindow;
+    private readonly SettingsService _settingsService;
+    private readonly TerminalWindow _terminalWindow;
+    private readonly CoreMeterUtility _coreMeterUtility;
+    private readonly TerminalOutputBuffer _outputBuffer;
+    private readonly VirtualTerminalTextFilter _terminalTextFilter = new();
+    private readonly DispatcherTimer _outputTimer;
+    private readonly SemaphoreSlim _sessionLifecycle = new(1, 1);
 
-        // Main Process
-        private Process _process;
+    private BackgroundTerminalSettings _settings;
+    private ITerminalSession? _terminalSession;
+    private Regex? _regex;
+    private string? _currentTrigger;
+    private string _newlineString = "\r";
+    private bool _terminalWindowActive;
+    private bool _terminalWindowLocked = true;
+    private bool _awaitingKey1;
+    private bool _awaitingKey2;
+    private bool _isClosing;
+    private bool _shutdownComplete;
+    private bool _fallbackNoticeShown;
+    private Key? _key1;
+    private Key? _key2;
 
-        // CoreMeter
-        private CoreMeterUtility _coreMeterUtility;
+    public MainWindow()
+    {
+        InitializeComponent();
 
-        // Settings Container
-        private BackgroundTerminalSettings _settings;
+        _settingsService = new SettingsService(ConfigPath);
+        SettingsLoadResult loadResult = LoadSettings();
+        _settings = loadResult.Settings;
+        _outputBuffer = new TerminalOutputBuffer(_settings.MaxOutputCharacters);
 
-        // SSH Handling
-        private SshClient _sshClient;
-        private ShellStream _sshStream;
-        private bool _sshMode = false;
-        private string _sshServer = String.Empty;
-        private string _sshUsername = String.Empty;
-        private string _sshCurrentDirectory = String.Empty;
+        NewlineTriggers = new ObservableCollection<NewlineTrigger>(
+            _settings.NewlineTriggers);
+        DataContext = this;
 
-        // UI List Bindings
-        private ObservableCollection<string> _terminalData = new ObservableCollection<string>();
-        public ObservableCollection<NewlineTrigger> NewlineTriggers { get; set; }
+        _terminalWindow = new TerminalWindow(
+            SendCommandAsync,
+            SendInterruptAsync,
+            TerminalWindowUiUpdate);
+        _terminalWindow.Show();
 
-        // Newline State Handling
-        private string _currentTrigger = null;
-        private string _newlineString = Environment.NewLine;
+        IntPtr terminalHandle = new WindowInteropHelper(_terminalWindow).Handle;
+        Win32Interop.HideWindowFromAltTabMenu(terminalHandle);
+        _coreMeterUtility = new CoreMeterUtility(terminalHandle);
+        _coreMeterUtility.Lock();
+        _terminalWindow.SetWindowLocked(true);
 
-        // CMD Process ID
-        private int _cmdProcessId;
+        _outputTimer = new DispatcherTimer(
+            TimeSpan.FromMilliseconds(50),
+            DispatcherPriority.Background,
+            FlushTerminalOutput,
+            Dispatcher);
+        _outputTimer.Start();
 
-        // TerminalWindow UI State Handling
-        private bool _terminalWindowActive = false;
-        private bool _terminalWindowLocked = true;
+        ApplySettingsToTerminalWindow();
+        PopulateSettingsControls();
 
-        private bool _awaitingKey1 = false;
-        private bool _awaitingKey2 = false;
-
-        private Key? _key1 = null;
-        private Key? _key2 = null;
-
-        // Filter to apply to output
-        private Regex _regex;
-
-        #region Constructor
-        public MainWindow() {
-            InitializeComponent();
-
-            // Create TerminalWindow
-            _terminalWindow = new TerminalWindow(SendCommand, KillProcess, TerminalWindowUIUpdate);
-            _terminalWindow.Show();
-
-            // Apply changes in terminal data to TerminalWindow
-            _terminalData.CollectionChanged += new System.Collections.Specialized.NotifyCollectionChangedEventHandler(
-                (object o, System.Collections.Specialized.NotifyCollectionChangedEventArgs target) =>
-                {
-                    Dispatcher.Invoke(() =>
-                    {
-                        foreach (string newItem in target.NewItems) 
-                        {
-                            if (_regex != null) {
-                                _terminalWindow.TerminalData_TextBox.AppendText(_regex.Replace(newItem, "") + Environment.NewLine);
-                            } else {
-                                _terminalWindow.TerminalData_TextBox.AppendText(newItem + Environment.NewLine);
-                            }
-                        }
-                        
-                        _terminalWindow.TerminalData_TextBox.ScrollToEnd();
-                    });
-                });
-
-            // Get TerminalWindow handle
-            IntPtr hWnd = new WindowInteropHelper(_terminalWindow).Handle;
-
-            // Hide window from alt tab menu
-            Win32Interop.HideWindowFromAltTabMenu(hWnd);
-
-            // Initialize CoreMeterUtility for TerminalWindow
-            _coreMeterUtility = new CoreMeterUtility(hWnd);
-
-            // Initially lock TerminalWindow
-            _coreMeterUtility.Lock();
-
-            // Load settings from json file
-            _settings = JsonConvert.DeserializeObject<BackgroundTerminalSettings>(File.ReadAllText(_configPath));
-
-            ApplySettingsToTerminalWindow();
-
-            _key1 = KeyInterop.KeyFromVirtualKey(_settings.Key1);
-            _key2 = KeyInterop.KeyFromVirtualKey(_settings.Key2);
-            
-            if (_settings.RegexFilter != null) {
-                try {
-                    _regex = new Regex(_settings.RegexFilter);
-                } catch { 
-                    // Should not happen, unless someone fiddles with the JS file manually
-                }
-            }
-
-            Process_TextBox.Text = _settings.ProcessPath;
-            Key1_Button.Content = _key1.ToString();
-            Key2_Button.Content = _key2.ToString();
-            FontSize_TextBox.Text = _settings.FontSize.ToString();
-            FontColor_TextBox.Text = _settings.FontColor;
-            FontFamily_TextBox.Text = _settings.FontFamily;
-            PosX_TextBox.Text = _settings.PosX.ToString();
-            PosY_TextBox.Text = _settings.PosY.ToString();
-            Width_TextBox.Text = _settings.Width.ToString();
-            Height_TextBox.Text = _settings.Height.ToString();
-            RegexFilter_TextBox.Text = _settings.RegexFilter;
-
-            if (_settings.NewlineTriggers == null)
-                _settings.NewlineTriggers = new List<NewlineTrigger>();
-
-            NewlineTriggers = new ObservableCollection<NewlineTrigger>(_settings.NewlineTriggers);
-
-            // Set KeyTriggered callback delegate
-            Win32Interop.KeyTriggered = KeyTriggered;
-
-            // Initialize Global Keyhook
+        Win32Interop.KeyTriggered = KeyTriggered;
+        try
+        {
             Win32Interop.SetKeyhook();
-
-            // Begin terminal process
-            RunTerminalProcessAsync();
-
-            DataContext = this;
         }
-        #endregion
+        catch (Win32Exception exception)
+        {
+            QueueOutput(
+                $"The global activation shortcut is unavailable: {exception.Message}" +
+                Environment.NewLine);
+        }
 
-        #region General Functions
-        private void KillProcess() {
-            if (_sshMode) {
-                _sshClient.Disconnect();
-                _sshClient.Dispose();
+        if (!string.IsNullOrWhiteSpace(loadResult.RecoveryMessage))
+        {
+            QueueOutput(loadResult.RecoveryMessage + Environment.NewLine);
+        }
+    }
 
-                _sshMode = false;
+    public ObservableCollection<NewlineTrigger> NewlineTriggers { get; }
 
-                _terminalData.Add("SSH Session Disconnected");
-            } else {
-                KillChildren();
+    private SettingsLoadResult LoadSettings()
+    {
+        try
+        {
+            return _settingsService.Load();
+        }
+        catch (Exception exception) when (
+            exception is IOException or UnauthorizedAccessException)
+        {
+            return new SettingsLoadResult(
+                new BackgroundTerminalSettings(),
+                $"Settings could not be loaded; defaults are in use: {exception.Message}");
+        }
+    }
+
+    private void PopulateSettingsControls()
+    {
+        _key1 = KeyInterop.KeyFromVirtualKey(_settings.Key1);
+        _key2 = KeyInterop.KeyFromVirtualKey(_settings.Key2);
+        _regex = CreateRegex(_settings.RegexFilter);
+
+        Process_TextBox.Text = _settings.ProcessPath;
+        Key1_Button.Content = _key1?.ToString() ?? string.Empty;
+        Key2_Button.Content = _key2?.ToString() ?? string.Empty;
+        FontSize_TextBox.Text = _settings.FontSize.ToString(CultureInfo.CurrentCulture);
+        FontColor_TextBox.Text = _settings.FontColor;
+        FontFamily_TextBox.Text = _settings.FontFamily;
+        PosX_TextBox.Text = _settings.PosX.ToString(CultureInfo.CurrentCulture);
+        PosY_TextBox.Text = _settings.PosY.ToString(CultureInfo.CurrentCulture);
+        Width_TextBox.Text = _settings.Width.ToString(CultureInfo.CurrentCulture);
+        Height_TextBox.Text = _settings.Height.ToString(CultureInfo.CurrentCulture);
+        RegexFilter_TextBox.Text = _settings.RegexFilter;
+    }
+
+    private void ApplySettingsToTerminalWindow()
+    {
+        Brush foreground = (Brush?)BrushConverter.ConvertFromString(_settings.FontColor)
+            ?? Brushes.White;
+        FontFamily fontFamily = new(_settings.FontFamily);
+
+        _terminalWindow.TerminalData_TextBox.FontSize = _settings.FontSize;
+        _terminalWindow.Input_TextBox.FontSize = _settings.FontSize;
+        _terminalWindow.TerminalData_TextBox.FontFamily = fontFamily;
+        _terminalWindow.Input_TextBox.FontFamily = fontFamily;
+        _terminalWindow.TerminalData_TextBox.Foreground = foreground;
+        _terminalWindow.Input_TextBox.Foreground = foreground;
+        _terminalWindow.Left = _settings.PosX;
+        _terminalWindow.Top = _settings.PosY;
+        _terminalWindow.Width = _settings.Width;
+        _terminalWindow.Height = _settings.Height;
+    }
+
+    private void TerminalWindowUiUpdate()
+    {
+        PosX_TextBox.Text = _terminalWindow.Left.ToString(CultureInfo.CurrentCulture);
+        PosY_TextBox.Text = _terminalWindow.Top.ToString(CultureInfo.CurrentCulture);
+        Width_TextBox.Text = _terminalWindow.Width.ToString(CultureInfo.CurrentCulture);
+        Height_TextBox.Text = _terminalWindow.Height.ToString(CultureInfo.CurrentCulture);
+    }
+
+    private async Task RestartTerminalSessionAsync()
+    {
+        await _sessionLifecycle.WaitAsync();
+        try
+        {
+            await DisposeTerminalSessionAsync();
+
+            if (_isClosing)
+            {
+                return;
             }
-        }
 
-        private void OutputSSHUsage() {
-            _terminalData.Add("Background Terminal manually handles SSH connection. (Ctrl + C to quit)");
-            _terminalData.Add("Usage: ssh <server>");
-        }
-        #endregion
+            ITerminalSession session = await TerminalSessionFactory.CreateAsync();
+            session.OutputReceived += TerminalSession_OutputReceived;
+            session.Exited += TerminalSession_Exited;
+            _terminalSession = session;
+            _newlineString = session.InputNewLine;
 
-        #region UI State Functions
-        private void ApplySettingsToTerminalWindow() {
-            _terminalWindow.TerminalData_TextBox.FontSize = _settings.FontSize;
-            _terminalWindow.Input_TextBox.FontSize = _settings.FontSize;
-            if (_settings.FontFamily != null) {
-                _terminalWindow.TerminalData_TextBox.FontFamily = new FontFamily(_settings.FontFamily);
-            }
-            _terminalWindow.TerminalData_TextBox.Foreground = (Brush)_brushConverter.ConvertFromString(_settings.FontColor);
-            _terminalWindow.Input_TextBox.Foreground = (Brush)_brushConverter.ConvertFromString(_settings.FontColor);
-            _terminalWindow.Left = _settings.PosX;
-            _terminalWindow.Top = _settings.PosY;
-            _terminalWindow.Width = _settings.Width;
-            _terminalWindow.Height = _settings.Height;
-        }
-
-        private void TerminalWindowUIUpdate() {
-            PosX_TextBox.Text = _terminalWindow.Left.ToString();
-            PosY_TextBox.Text = _terminalWindow.Top.ToString();
-
-            Width_TextBox.Text = _terminalWindow.Width.ToString();
-            Height_TextBox.Text = _terminalWindow.Height.ToString();
-        }
-        #endregion
-
-        #region Process Helper Functions
-        private List<Process> GetProcessChildren() {
-            List<Process> children = new List<Process>();
-            ManagementObjectSearcher managementObjectSearcher = new ManagementObjectSearcher(String.Format("Select * From Win32_Process Where ParentProcessID={0}", _process.Id));
-
-            foreach (ManagementObject managementObject in managementObjectSearcher.Get()) {
-                children.Add(Process.GetProcessById(Convert.ToInt32(managementObject["ProcessID"])));
+            if (session is RedirectedProcessTerminalSession &&
+                !_fallbackNoticeShown)
+            {
+                _fallbackNoticeShown = true;
+                QueueOutput(
+                    "[ConPTY is unavailable in this session; using redirected " +
+                    $"process mode.]{Environment.NewLine}");
             }
 
-            return children;
-        }
-
-        private void KillChildren() {
-            List<Process> children = GetProcessChildren();
-
-            foreach (Process child in children) {
-                if (!child.Id.Equals(_cmdProcessId)) {
-                    child.Kill();
+            try
+            {
+                await session.StartAsync(
+                    _settings.ProcessPath);
+            }
+            catch (Exception exception)
+            {
+                if (ReferenceEquals(_terminalSession, session))
+                {
+                    _terminalSession = null;
                 }
-            }
-        }
-        #endregion
 
-        #region Terminal Data Handlers
-        private async Task<int> RunTerminalProcessAsync() {
-            TaskCompletionSource<int> taskCompletionSource = new TaskCompletionSource<int>();
+                session.OutputReceived -= TerminalSession_OutputReceived;
+                session.Exited -= TerminalSession_Exited;
+                try
+                {
+                    await session.DisposeAsync();
+                }
+                catch (Exception disposeException)
+                {
+                    QueueOutput(
+                        $"Unable to release the failed terminal session: " +
+                        $"{disposeException.Message}{Environment.NewLine}");
+                }
+                QueueOutput(
+                    $"Unable to start '{_settings.ProcessPath}': {exception.Message}" +
+                    Environment.NewLine);
 
-            try {
-                _process?.Kill();
-            } catch (Exception e) { }
-
-            _process = new Process();
-
-            _process.StartInfo.FileName = _settings.ProcessPath;
-            _process.StartInfo.WorkingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            _process.StartInfo.UseShellExecute = false;
-            _process.StartInfo.CreateNoWindow = true;
-            _process.StartInfo.RedirectStandardInput = true;
-            _process.StartInfo.RedirectStandardOutput = true;
-            _process.StartInfo.RedirectStandardError = true;
-
-            _process.EnableRaisingEvents = true;
-            _process.OutputDataReceived += OutputDataReceived;
-            _process.ErrorDataReceived += ErrorDataReceived;
-
-            _process.Exited += new EventHandler((sender, args) => {
-                Process process = (Process)sender;
-                taskCompletionSource.SetResult(process.ExitCode);
-                process.Dispose();
-            });
-
-            try {
-                _process.Start();
-
-                _process.BeginOutputReadLine();
-                _process.BeginErrorReadLine();
-
-                List<Process> children = GetProcessChildren();
-                if (children.Count > 0)
-                    _cmdProcessId = children[0].Id;
-            } catch (Exception e) {
                 Show();
                 WindowState = WindowState.Normal;
                 Topmost = true;
+                MessageBox.Show(
+                    this,
+                    "There was an error starting the terminal process. Check the Process " +
+                    $"input and apply changes to retry.{Environment.NewLine}{Environment.NewLine}" +
+                    exception.Message,
+                    "Background Terminal",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+        finally
+        {
+            _sessionLifecycle.Release();
+        }
+    }
 
-                System.Windows.MessageBox.Show("There was an error starting the process. Check your Process input and Apply Changes to retry. Details: " + Environment.NewLine + Environment.NewLine + e.Message);
-                taskCompletionSource.SetException(e);
+    private async Task DisposeTerminalSessionAsync()
+    {
+        ITerminalSession? session = _terminalSession;
+        _terminalSession = null;
+        if (session is null)
+        {
+            return;
+        }
+
+        session.OutputReceived -= TerminalSession_OutputReceived;
+        session.Exited -= TerminalSession_Exited;
+
+        try
+        {
+            await session.StopAsync();
+        }
+        catch (Exception exception)
+        {
+            QueueOutput($"Unable to stop the terminal cleanly: {exception.Message}{Environment.NewLine}");
+        }
+
+        try
+        {
+            await session.DisposeAsync();
+        }
+        catch (Exception exception)
+        {
+            QueueOutput(
+                $"Unable to release the terminal session: {exception.Message}" +
+                Environment.NewLine);
+        }
+    }
+
+    private void TerminalSession_OutputReceived(string output)
+    {
+        QueueOutput(output);
+    }
+
+    private void TerminalSession_Exited(int exitCode)
+    {
+        if (!_isClosing)
+        {
+            QueueOutput(
+                $"{Environment.NewLine}[Terminal exited with code {exitCode}]" +
+                Environment.NewLine);
+        }
+    }
+
+    private void QueueOutput(string? text)
+    {
+        _outputBuffer.Append(text);
+    }
+
+    private void FlushTerminalOutput(object? sender, EventArgs e)
+    {
+        string output = _outputBuffer.Drain();
+        if (output.Length == 0)
+        {
+            return;
+        }
+
+        output = _terminalTextFilter.Filter(output);
+
+        if (_regex is not null)
+        {
+            output = _regex.Replace(output, string.Empty);
+        }
+
+        if (output.Length == 0)
+        {
+            return;
+        }
+
+        _terminalWindow.TerminalData_TextBox.AppendText(output);
+        TrimRenderedOutput();
+        _terminalWindow.TerminalData_TextBox.ScrollToEnd();
+    }
+
+    private void TrimRenderedOutput()
+    {
+        TextRange fullRange = new(
+            _terminalWindow.TerminalData_TextBox.Document.ContentStart,
+            _terminalWindow.TerminalData_TextBox.Document.ContentEnd);
+        string renderedText = fullRange.Text;
+        if (renderedText.Length <= _settings.MaxOutputCharacters)
+        {
+            return;
+        }
+
+        int tailLength = Math.Max(
+            0,
+            _settings.MaxOutputCharacters - Environment.NewLine.Length);
+        string tail = renderedText[^tailLength..];
+        _terminalWindow.TerminalData_TextBox.Document.Blocks.Clear();
+        _terminalWindow.TerminalData_TextBox.AppendText(tail);
+    }
+
+    private async Task SendCommandAsync(string command)
+    {
+        BuiltInCommandResult builtIn = BuiltInCommandParser.Parse(command);
+        if (builtIn.Kind != BuiltInCommandKind.None)
+        {
+            QueueOutput(command + Environment.NewLine);
+
+            if (builtIn.Kind == BuiltInCommandKind.SetNewline)
+            {
+                _newlineString = builtIn.Newline ?? "\r";
+            }
+            else
+            {
+                QueueOutput((builtIn.Error ?? "Invalid Background Terminal command.") +
+                    Environment.NewLine);
             }
 
-            return await taskCompletionSource.Task;
+            return;
         }
 
-        private void OutputDataReceived(object sender, DataReceivedEventArgs e) {
-            _terminalData.Add(e.Data);
+        ITerminalSession? session = _terminalSession;
+        if (session is null || !session.IsRunning)
+        {
+            QueueOutput("The terminal process is not running." + Environment.NewLine);
+            return;
         }
 
-        private void ErrorDataReceived(object sender, DataReceivedEventArgs e) {
-            _terminalData.Add(e.Data);
+        try
+        {
+            await session.WriteAsync(command + _newlineString);
+            UpdateNewlineTrigger(command);
+        }
+        catch (Exception exception)
+        {
+            QueueOutput($"Unable to send input: {exception.Message}{Environment.NewLine}");
+        }
+    }
+
+    private async Task SendInterruptAsync()
+    {
+        ITerminalSession? session = _terminalSession;
+        if (session is null || !session.IsRunning)
+        {
+            return;
         }
 
-        private async Task<string> SendCommandSSH(string command, bool silent = false) {
-            // Handle SSH login connection
-            if (_sshUsername.Equals(String.Empty)) {
-                _sshUsername = command;
-                _terminalData.Add("Enter password:");
+        try
+        {
+            await session.SendInterruptAsync();
+            if (session is RedirectedProcessTerminalSession)
+            {
+                await RestartTerminalSessionAsync();
+            }
+        }
+        catch (Exception exception)
+        {
+            QueueOutput($"Unable to interrupt the terminal: {exception.Message}{Environment.NewLine}");
+        }
+    }
 
-                _terminalWindow._passwordMode = true;
-            } else if (_terminalWindow._passwordMode) {
-                _terminalData.Add("Connecting...");
-
-                // Attempt connection
-                _sshClient = new SshClient(_sshServer, _sshUsername, _terminalWindow._password);
-                try {
-                    _sshClient.Connect();
-
-                    _terminalWindow._passwordMode = false;
-                    _terminalWindow._password = String.Empty;
-
-                    var modes = new Dictionary<Renci.SshNet.Common.TerminalModes, uint>();
-                    _sshStream = _sshClient.CreateShellStream("bgtTerm", 255, 50, 800, 600, 1024, modes);
-
-                    _sshStream.DataReceived += async (object sender, ShellDataEventArgs e) => {
-                        if (_sshStream != null && _sshStream.CanRead) {
-                            byte[] buffer = new byte[2048];
-                            int i = 0;
-
-                            if ((i = await _sshStream.ReadAsync(buffer, 0, buffer.Length)) != 1) {
-                                _terminalData.Add(_sshClient.ConnectionInfo.Encoding.GetString(buffer, 0, i));
-                            }
-                        }
-                    };
-
-                    if (_sshClient.IsConnected) {
-                        _terminalData.Add("Connected to " + _sshServer);
-                    } else {
-                        _terminalData.Add("There was a problem connecting.");
-
-                        _sshMode = false;
-                        _sshUsername = String.Empty;
-                    }
-                } catch (Exception e) {
-                    _terminalData.Add(e.Message);
+    private void UpdateNewlineTrigger(string command)
+    {
+        foreach (NewlineTrigger trigger in _settings.NewlineTriggers)
+        {
+            if (!string.IsNullOrEmpty(trigger.TriggerCommand) &&
+                command.StartsWith(trigger.TriggerCommand, StringComparison.Ordinal))
+            {
+                if (TryUnescape(trigger.NewlineString, out string newline))
+                {
+                    _currentTrigger = trigger.TriggerCommand;
+                    _newlineString = newline;
+                }
+                else
+                {
+                    QueueOutput(
+                        $"Newline trigger '{trigger.TriggerCommand}' contains an invalid " +
+                        $"escape sequence.{Environment.NewLine}");
                 }
             }
-
-              // Handle SSH commands
-              else {
-                if (_sshClient.IsConnected) {
-                    try {
-                        _sshStream.WriteLine(command);
-                    } catch (Exception e) {
-                        _terminalData.Add(e.Message);
-                    }
-                } else {
-                    _terminalData.Add("You are no longer connected to SSH. Exiting.");
-
-                    _sshMode = false;
-                    _sshUsername = String.Empty;
-                }
+            else if (_currentTrigger == trigger.TriggerCommand &&
+                !string.IsNullOrEmpty(trigger.ExitCommand) &&
+                command.StartsWith(trigger.ExitCommand, StringComparison.Ordinal))
+            {
+                _currentTrigger = null;
+                _newlineString = "\r";
             }
+        }
+    }
 
+    private static bool TryUnescape(string value, out string unescaped)
+    {
+        try
+        {
+            unescaped = Regex.Unescape(value);
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            unescaped = "\r";
+            return false;
+        }
+    }
+
+    private static Regex? CreateRegex(string? pattern)
+    {
+        if (string.IsNullOrEmpty(pattern))
+        {
             return null;
         }
 
-        private void SendCommandBGT(string command) {
-            string bgtCommand = command.Split(' ')[1];
-            string[] parameters = command.Substring(command.IndexOf(bgtCommand) + bgtCommand.Length + 1).Split(' ');
+        return new Regex(pattern, RegexOptions.CultureInvariant);
+    }
 
-            if (bgtCommand.Equals("newline")) {
-                _newlineString = Regex.Unescape(parameters[0]);
-            }
+    private void TrayIcon_LeftMouseDown(object sender, RoutedEventArgs e)
+    {
+        if (WindowState == WindowState.Minimized)
+        {
+            Show();
+            WindowState = WindowState.Normal;
+            Topmost = true;
         }
-
-        private async void SendCommand(string command) {
-            // Handle SSH mode
-            if (_sshMode) {
-                SendCommandSSH(command);
-            }
-
-            // Background-Terminal application commands
-            else if (command.ToLower().StartsWith("bgt")) {
-                _terminalData.Add(command);
-                SendCommandBGT(command);
-            }
-
-            // Initialize SSH mode
-            else if (command.ToLower().StartsWith("ssh")) {
-                _terminalData.Add(command);
-
-                List<string> commandParams = command.Split(' ').ToList();
-
-                if (commandParams.Count != 2) {
-                    OutputSSHUsage();
-                } else {
-                    _sshServer = commandParams[1];
-
-                    OutputSSHUsage();
-
-                    _terminalData.Add("");
-                    _terminalData.Add("Enter username:");
-
-                    _sshMode = true;
-                }
-            }
-
-            // Standard command handling
-            else {
-                _terminalData.Add(command);
-
-                _process.StandardInput.NewLine = _newlineString;
-                _process.StandardInput.WriteLine(command);
-
-                // Check for newline trigger activations
-                foreach (NewlineTrigger trigger in _settings.NewlineTriggers) {
-                    if (command.StartsWith(trigger.TriggerCommand)) {
-                        _currentTrigger = trigger.TriggerCommand;
-
-                        _newlineString = Regex.Unescape(trigger.NewlineString);
-                    } else if (command.StartsWith(trigger.ExitCommand) && _currentTrigger != null && _currentTrigger.Equals(trigger.TriggerCommand)) {
-                        _currentTrigger = null;
-
-                        _newlineString = Environment.NewLine;
-                    }
-                }
-            }
-        }
-        #endregion
-
-        #region Event Handlers
-        private void TrayIcon_LeftMouseDown(object sender, RoutedEventArgs e) {
-            if (WindowState == WindowState.Minimized) {
-                Show();
-
-                WindowState = WindowState.Normal;
-
-                Topmost = true;
-            } else {
-                WindowState = WindowState.Minimized;
-            }
-        }
-
-        private void TerminalWindowLockedButton_Click(object sender, RoutedEventArgs e) {
-            if (_terminalWindowLocked) {
-                _terminalWindowLocked = false;
-                TerminalWindowLocked_Button.Content = "Unlocked";
-            } else {
-                _terminalWindowLocked = true;
-                TerminalWindowLocked_Button.Content = "Locked";
-            }
-
-            _terminalWindow.SetWindowLocked(_terminalWindowLocked);
-        }
-
-        private void Key1Button_Click(object sender, RoutedEventArgs e) {
-            Key1_Button.Content = "Press Key...";
-
-            if (_awaitingKey2) {
-                if (_key1 == null)
-                    Key1_Button.Content = "";
-                else
-                    Key1_Button.Content = KeyInterop.VirtualKeyFromKey((Key)_key1).ToString();
-
-                _awaitingKey2 = false;
-            }
-
-            _awaitingKey1 = true;
-        }
-
-        private void Key2Button_Click(object sender, RoutedEventArgs e) {
-            Key2_Button.Content = "Press Key...";
-
-            if (_awaitingKey1) {
-                if (_key2 == null)
-                    Key2_Button.Content = "";
-                else
-                    Key2_Button.Content = KeyInterop.VirtualKeyFromKey((Key)_key2).ToString();
-
-                _awaitingKey1 = false;
-            }
-
-            _awaitingKey2 = true;
-        }
-
-        private void AddNewlineTriggerButton_Click(object sender, RoutedEventArgs e) {
-            NewlineTriggers.Add(new NewlineTrigger("Trigger Command", "Exit Command", "Newline Character"));
-        }
-
-        private void DeleteNewlineTriggerButton_Click(object sender, RoutedEventArgs e) {
-            if (NewlineTrigger_ListBox.SelectedItem != null)
-                NewlineTriggers.Remove((NewlineTrigger)NewlineTrigger_ListBox.SelectedItem);
-        }
-
-        private void NewlineTriggerTextBox_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
-            NewlineTrigger_ListBox.SelectedItem = ((TextBox)sender).DataContext;
-        }
-
-        private void ApplyChangesButton_Click(object sender, RoutedEventArgs e) {
-            System.Windows.Media.Brush fontColor;
-
-            double fontSize;
-            double posX;
-            double posY;
-            double width;
-            double height;
-
-            try {
-                fontColor = (System.Windows.Media.Brush)(new BrushConverter()).ConvertFromString(FontColor_TextBox.Text);
-            } catch {
-                System.Windows.MessageBox.Show("There was an error interpreting font color input");
-                return;
-            }
-
-            try {
-                fontSize = Convert.ToDouble(FontSize_TextBox.Text);
-            } catch {
-                System.Windows.MessageBox.Show("There was an error interpreting font size input");
-                return;
-            }
-
-            try {
-                new FontFamily(_settings.FontFamily);
-            } catch {
-                System.Windows.MessageBox.Show("There was an error interpreting font family input");
-                return;
-            }
-
-            try {
-                posX = Convert.ToDouble(PosX_TextBox.Text);
-            } catch {
-                System.Windows.MessageBox.Show("There was an error interpreting X position input");
-                return;
-            }
-
-            try {
-                posY = Convert.ToDouble(PosY_TextBox.Text);
-            } catch {
-                System.Windows.MessageBox.Show("There was an error interpreting Y position input");
-                return;
-            }
-
-            try {
-                width = Convert.ToDouble(Width_TextBox.Text);
-            } catch {
-                System.Windows.MessageBox.Show("There was an error interpreting width input");
-                return;
-            }
-
-            try {
-                height = Convert.ToDouble(Height_TextBox.Text);
-            } catch {
-                System.Windows.MessageBox.Show("There was an error interpreting height input");
-                return;
-            }
-
-            try {
-                _regex = new Regex(RegexFilter_TextBox.Text);
-            } catch {
-                System.Windows.MessageBox.Show("There was an error interpreting the regex filter");
-                return;
-            }
-
-            _settings.Key1 = KeyInterop.VirtualKeyFromKey((Key)_key1);
-            _settings.Key2 = KeyInterop.VirtualKeyFromKey((Key)_key2);
-            _settings.FontSize = fontSize;
-            _settings.FontColor = fontColor.ToString();
-            _settings.FontFamily = FontFamily_TextBox.Text;
-            _settings.PosX = posX;
-            _settings.PosY = posY;
-            _settings.Width = width;
-            _settings.Height = height;
-            _settings.RegexFilter = RegexFilter_TextBox.Text;
-
-            _settings.NewlineTriggers = new List<NewlineTrigger>(NewlineTriggers);
-
-            if (!_settings.ProcessPath.Equals(Process_TextBox.Text)) {
-                _settings.ProcessPath = Process_TextBox.Text;
-
-                // Begin terminal process
-                RunTerminalProcessAsync();
-            }
-
-            ApplySettingsToTerminalWindow();
-
-            File.WriteAllText(_configPath, JsonConvert.SerializeObject(_settings));
-        }
-
-        private void MainWindow_MouseDown(object sender, MouseButtonEventArgs e) {
-            if (e.LeftButton == MouseButtonState.Pressed)
-                this.DragMove();
-        }
-
-        private void MainWindow_Loaded(object sender, EventArgs e) {
-            this.WindowState = WindowState.Minimized;
-        }
-
-        private void MinimizeButton_Click(object sender, RoutedEventArgs e) {
+        else
+        {
             WindowState = WindowState.Minimized;
         }
+    }
 
-        private void ExitButton_Click(object sender, RoutedEventArgs e) {
-            if (_sshClient != null) {
-                if (_sshClient.IsConnected)
-                    _sshClient.Disconnect();
+    private void TerminalWindowLockedButton_Click(object sender, RoutedEventArgs e)
+    {
+        _terminalWindowLocked = !_terminalWindowLocked;
+        TerminalWindowLocked_Button.Content = _terminalWindowLocked ? "Locked" : "Unlocked";
+        _terminalWindow.SetWindowLocked(_terminalWindowLocked);
 
-                _sshClient.Dispose();
-            }
+        if (_terminalWindowLocked)
+        {
+            _coreMeterUtility.Lock();
+        }
+        else
+        {
+            _coreMeterUtility.Unlock();
+        }
+    }
 
-            _process.Kill();
+    private void Key1Button_Click(object sender, RoutedEventArgs e)
+    {
+        Key1_Button.Content = "Press Key...";
 
-            Close();
+        if (_awaitingKey2)
+        {
+            Key2_Button.Content = _key2?.ToString() ?? string.Empty;
+            _awaitingKey2 = false;
         }
 
-        private void MainWindow_StateChanged(object sender, EventArgs e) {
-            if (WindowState == WindowState.Minimized)
-                Hide();
-            else
-                Show();
+        _awaitingKey1 = true;
+    }
+
+    private void Key2Button_Click(object sender, RoutedEventArgs e)
+    {
+        Key2_Button.Content = "Press Key...";
+
+        if (_awaitingKey1)
+        {
+            Key1_Button.Content = _key1?.ToString() ?? string.Empty;
+            _awaitingKey1 = false;
         }
 
-        private void MainWindow_Closed(object sender, EventArgs e) {
-            // End global keyhook
-            Win32Interop.DestroyKeyhook();
+        _awaitingKey2 = true;
+    }
 
-            // Close terminal window
-            _terminalWindow.Close();
+    private void AddNewlineTriggerButton_Click(object sender, RoutedEventArgs e)
+    {
+        NewlineTriggers.Add(new NewlineTrigger(
+            "Trigger Command",
+            "Exit Command",
+            "Newline Character"));
+    }
 
-            Environment.Exit(0);
+    private void DeleteNewlineTriggerButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (NewlineTrigger_ListBox.SelectedItem is NewlineTrigger selectedTrigger)
+        {
+            NewlineTriggers.Remove(selectedTrigger);
         }
-        #endregion
+    }
 
-        #region Key Detection Callback Delegate
-        private void KeyTriggered(int keyCode) {
-            if (_key1 != null && _key2 != null) {
-                int vKey1 = KeyInterop.VirtualKeyFromKey((Key)_key1);
-                int vKey2 = KeyInterop.VirtualKeyFromKey((Key)_key2);
+    private void NewlineTriggerTextBox_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        NewlineTrigger_ListBox.SelectedItem = ((TextBox)sender).DataContext;
+    }
 
-                if (keyCode == vKey2 && Win32Interop.IsKeyDown(vKey1)) {
-                    _terminalWindow.Input_TextBox.Text = "";
+    private async void ApplyChangesButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!TryReadSettingsFromControls(out BackgroundTerminalSettings? updatedSettings))
+        {
+            return;
+        }
 
-                    if (!_terminalWindowActive) {
-                        Win32Interop.ClickSimulateFocus(_terminalWindow);
-                        Win32Interop.SetForegroundWindow((new WindowInteropHelper(_terminalWindow)).Handle);
-                        Win32Interop.SetActiveWindow((new WindowInteropHelper(_terminalWindow)).Handle);
-                        FocusManager.SetFocusedElement(_terminalWindow, _terminalWindow.Input_TextBox);
-                        Keyboard.Focus(_terminalWindow.Input_TextBox);
+        bool processChanged = !string.Equals(
+            _settings.ProcessPath,
+            updatedSettings.ProcessPath,
+            StringComparison.OrdinalIgnoreCase);
 
-                        _terminalWindowActive = true;
-                    } else {
-                        _terminalWindowActive = false;
+        try
+        {
+            _settingsService.Save(updatedSettings);
+        }
+        catch (Exception exception) when (
+            exception is IOException or UnauthorizedAccessException)
+        {
+            MessageBox.Show(
+                this,
+                $"Settings could not be saved:{Environment.NewLine}{Environment.NewLine}" +
+                exception.Message,
+                "Background Terminal",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            return;
+        }
 
-                        Keyboard.ClearFocus();
-                    }
+        _settings = updatedSettings;
+        _regex = CreateRegex(_settings.RegexFilter);
+        ApplySettingsToTerminalWindow();
+
+        if (processChanged)
+        {
+            await RestartTerminalSessionAsync();
+        }
+    }
+
+    private bool TryReadSettingsFromControls(
+        [NotNullWhen(true)] out BackgroundTerminalSettings? updatedSettings)
+    {
+        updatedSettings = null;
+
+        if (_key1 is null || _key2 is null)
+        {
+            ShowValidationError("Choose both activation keys.");
+            return false;
+        }
+
+        string processPath = Process_TextBox.Text.Trim();
+        if (processPath.Length == 0)
+        {
+            ShowValidationError("Process cannot be empty.");
+            return false;
+        }
+
+        if (!SettingsService.IsValidHexColor(FontColor_TextBox.Text))
+        {
+            ShowValidationError("Font color must be a 6- or 8-digit hexadecimal color.");
+            return false;
+        }
+
+        if (!TryReadNumber(
+                FontSize_TextBox.Text,
+                6,
+                96,
+                "Font size must be a finite number from 6 through 96.",
+                out double fontSize) ||
+            !TryReadFiniteNumber(
+                PosX_TextBox.Text,
+                "X position must be a finite number.",
+                out double posX) ||
+            !TryReadFiniteNumber(
+                PosY_TextBox.Text,
+                "Y position must be a finite number.",
+                out double posY) ||
+            !TryReadNumber(
+                Width_TextBox.Text,
+                100,
+                10_000,
+                "Width must be a finite number from 100 through 10000.",
+                out double width) ||
+            !TryReadNumber(
+                Height_TextBox.Text,
+                100,
+                10_000,
+                "Height must be a finite number from 100 through 10000.",
+                out double height))
+        {
+            return false;
+        }
+
+        string fontFamilyText = FontFamily_TextBox.Text.Trim();
+        if (fontFamilyText.Length == 0)
+        {
+            ShowValidationError("Font family cannot be empty.");
+            return false;
+        }
+
+        FontFamily? fontFamily = Fonts.SystemFontFamilies.FirstOrDefault(
+            family => string.Equals(
+                family.Source,
+                fontFamilyText,
+                StringComparison.OrdinalIgnoreCase));
+        if (fontFamily is null)
+        {
+            ShowValidationError("Font family must name an installed system font.");
+            return false;
+        }
+
+        Regex? regex;
+        try
+        {
+            regex = CreateRegex(RegexFilter_TextBox.Text);
+        }
+        catch (ArgumentException)
+        {
+            ShowValidationError("There was an error interpreting the regex filter.");
+            return false;
+        }
+
+        _ = regex;
+        updatedSettings = new BackgroundTerminalSettings
+        {
+            ProcessPath = processPath,
+            Key1 = KeyInterop.VirtualKeyFromKey(_key1.Value),
+            Key2 = KeyInterop.VirtualKeyFromKey(_key2.Value),
+            FontSize = fontSize,
+            FontColor = FontColor_TextBox.Text,
+            FontFamily = fontFamily.Source,
+            PosX = posX,
+            PosY = posY,
+            Width = width,
+            Height = height,
+            RegexFilter = RegexFilter_TextBox.Text,
+            MaxOutputCharacters = _settings.MaxOutputCharacters,
+            NewlineTriggers = NewlineTriggers
+                .Select(trigger => new NewlineTrigger(
+                    trigger.TriggerCommand,
+                    trigger.ExitCommand,
+                    trigger.NewlineString))
+                .ToList()
+        };
+        return true;
+    }
+
+    private bool TryReadNumber(
+        string text,
+        double minimum,
+        double maximum,
+        string error,
+        out double value)
+    {
+        if (double.TryParse(
+                text,
+                NumberStyles.Float,
+                CultureInfo.CurrentCulture,
+                out value) &&
+            SettingsService.IsInRange(value, minimum, maximum))
+        {
+            return true;
+        }
+
+        ShowValidationError(error);
+        return false;
+    }
+
+    private bool TryReadFiniteNumber(string text, string error, out double value)
+    {
+        if (double.TryParse(
+                text,
+                NumberStyles.Float,
+                CultureInfo.CurrentCulture,
+                out value) &&
+            double.IsFinite(value))
+        {
+            return true;
+        }
+
+        ShowValidationError(error);
+        return false;
+    }
+
+    private void ShowValidationError(string message)
+    {
+        MessageBox.Show(
+            this,
+            message,
+            "Background Terminal",
+            MessageBoxButton.OK,
+            MessageBoxImage.Warning);
+    }
+
+    private void MainWindow_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.LeftButton == MouseButtonState.Pressed)
+        {
+            DragMove();
+        }
+    }
+
+    private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+        await RestartTerminalSessionAsync();
+    }
+
+    private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
+
+    private void ExitButton_Click(object sender, RoutedEventArgs e)
+    {
+        Close();
+    }
+
+    private async void MainWindow_Closing(object? sender, CancelEventArgs e)
+    {
+        if (_shutdownComplete)
+        {
+            return;
+        }
+
+        e.Cancel = true;
+        if (_isClosing)
+        {
+            return;
+        }
+
+        _isClosing = true;
+        await _sessionLifecycle.WaitAsync();
+        try
+        {
+            await DisposeTerminalSessionAsync();
+        }
+        finally
+        {
+            _sessionLifecycle.Release();
+        }
+
+        _shutdownComplete = true;
+        Close();
+    }
+
+    private void MainWindow_StateChanged(object sender, EventArgs e)
+    {
+        if (WindowState == WindowState.Minimized)
+        {
+            Hide();
+        }
+        else
+        {
+            Show();
+        }
+    }
+
+    private void MainWindow_Closed(object sender, EventArgs e)
+    {
+        _isClosing = true;
+        _outputTimer.Stop();
+        Win32Interop.DestroyKeyhook();
+        _terminalWindow.Close();
+        _sessionLifecycle.Dispose();
+    }
+
+    private void KeyTriggered(int keyCode)
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.BeginInvoke(() => KeyTriggered(keyCode));
+            return;
+        }
+
+        if (_key1 is not null && _key2 is not null)
+        {
+            int firstVirtualKey = KeyInterop.VirtualKeyFromKey(_key1.Value);
+            int secondVirtualKey = KeyInterop.VirtualKeyFromKey(_key2.Value);
+
+            if (keyCode == secondVirtualKey && Win32Interop.IsKeyDown(firstVirtualKey))
+            {
+                _terminalWindow.Input_TextBox.Clear();
+
+                if (!_terminalWindowActive)
+                {
+                    Win32Interop.ClickSimulateFocus(_terminalWindow);
+                    IntPtr terminalHandle = new WindowInteropHelper(_terminalWindow).Handle;
+                    Win32Interop.SetForegroundWindow(terminalHandle);
+                    Win32Interop.SetActiveWindow(terminalHandle);
+                    FocusManager.SetFocusedElement(
+                        _terminalWindow,
+                        _terminalWindow.Input_TextBox);
+                    Keyboard.Focus(_terminalWindow.Input_TextBox);
+                    _terminalWindowActive = true;
+                }
+                else
+                {
+                    _terminalWindowActive = false;
+                    Keyboard.ClearFocus();
                 }
             }
-
-            if (_awaitingKey1) {
-                _key1 = KeyInterop.KeyFromVirtualKey(keyCode);
-
-                _awaitingKey1 = false;
-
-                Key1_Button.Content = _key1.ToString();
-            }
-
-            if (_awaitingKey2) {
-                _key2 = KeyInterop.KeyFromVirtualKey(keyCode);
-
-                _awaitingKey2 = false;
-
-                Key2_Button.Content = _key2.ToString();
-            }
         }
-        #endregion
+
+        if (_awaitingKey1)
+        {
+            _key1 = KeyInterop.KeyFromVirtualKey(keyCode);
+            _awaitingKey1 = false;
+            Key1_Button.Content = _key1.ToString();
+        }
+
+        if (_awaitingKey2)
+        {
+            _key2 = KeyInterop.KeyFromVirtualKey(keyCode);
+            _awaitingKey2 = false;
+            Key2_Button.Content = _key2.ToString();
+        }
     }
 }

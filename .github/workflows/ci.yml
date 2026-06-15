@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DOTNET_NOLOGO: true
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore projects
+        shell: pwsh
+        run: |
+          dotnet restore Background-Terminal.Core/Background-Terminal.Core.csproj
+          dotnet restore Background-Terminal/Background-Terminal.csproj
+          dotnet restore Background-Terminal.Core.Tests/Background-Terminal.Core.Tests.csproj
+          dotnet restore Background-Terminal.IntegrationTests/Background-Terminal.IntegrationTests.csproj
+
+      - name: Build core
+        run: dotnet build Background-Terminal.Core/Background-Terminal.Core.csproj --configuration Release --no-restore
+
+      - name: Build application
+        run: dotnet build Background-Terminal/Background-Terminal.csproj --configuration Release --no-restore --property:Platform=x64
+
+      - name: Run tests
+        shell: pwsh
+        run: |
+          dotnet test Background-Terminal.Core.Tests/Background-Terminal.Core.Tests.csproj --configuration Release --no-restore
+          dotnet test Background-Terminal.IntegrationTests/Background-Terminal.IntegrationTests.csproj --configuration Release --no-restore --property:Platform=x64

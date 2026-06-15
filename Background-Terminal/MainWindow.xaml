@@ -11,6 +11,7 @@
     AllowsTransparency="True"
     Background="Transparent"
     Closed="MainWindow_Closed"
+    Closing="MainWindow_Closing"
     Loaded="MainWindow_Loaded"
     MouseDown="MainWindow_MouseDown"
     ResizeMode="NoResize"

@@ -1,197 +1,154 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 
-namespace Background_Terminal
+namespace Background_Terminal;
+
+public partial class TerminalWindow : Window
 {
-    public partial class TerminalWindow : Window
+    private const int MaxCommandHistoryEntries = 500;
+
+    private readonly Func<string, Task> _sendCommand;
+    private readonly Func<Task> _sendInterrupt;
+    private readonly Action _terminalWindowUiUpdate;
+    private readonly List<string> _commandHistory = [];
+
+    private int _commandHistoryIndex = -1;
+    private bool _locked;
+
+    public TerminalWindow(
+        Func<string, Task> sendCommand,
+        Func<Task> sendInterrupt,
+        Action terminalWindowUiUpdate)
     {
-        // MainWindow Delegates
-        public delegate void SendCommandProc(string command);
-        private SendCommandProc SendCommand;
+        InitializeComponent();
 
-        public delegate void KillProcessProc();
-        private KillProcessProc KillProcess;
+        _sendCommand = sendCommand;
+        _sendInterrupt = sendInterrupt;
+        _terminalWindowUiUpdate = terminalWindowUiUpdate;
+    }
 
-        public delegate void TerminalWindowUIUpdateProc();
-        private TerminalWindowUIUpdateProc TerminalWindowUIUpdate;
+    public void SetWindowLocked(bool locked)
+    {
+        _locked = locked;
 
-        // Command History
-        private List<string> _commandHistory = new List<string>();
-        private int _commandHistoryIndex = -1;
-
-        // UI
-        private bool _locked;
-
-        // Input Handling
-        private bool _ctrlDown = false;
-
-        // Password Mode
-        public bool _passwordMode = false;
-        public string _password = String.Empty;
-
-        #region Constructors
-        public TerminalWindow(SendCommandProc sendCommand, KillProcessProc killProcess, TerminalWindowUIUpdateProc terminalWindowUIUpdate)
+        if (locked)
         {
-            InitializeComponent();
-
-            SendCommand = sendCommand;
-            KillProcess = killProcess;
-            TerminalWindowUIUpdate = terminalWindowUIUpdate;
+            Background = Brushes.Transparent;
+            ResizeMode = ResizeMode.NoResize;
+            TerminalData_TextBox.IsHitTestVisible = true;
         }
-        #endregion
-
-        #region UI State Functions
-        private void UpdateTerminalDataTextBoxMargin()
+        else
         {
-            TerminalData_TextBox.Margin = new Thickness(0, 0, 0, Input_TextBox.ActualHeight);
+            Background = Brushes.Gray;
+            ResizeMode = ResizeMode.CanResizeWithGrip;
+            TerminalData_TextBox.IsHitTestVisible = false;
+        }
+    }
+
+    private void UpdateTerminalDataTextBoxMargin()
+    {
+        TerminalData_TextBox.Margin = new Thickness(0, 0, 0, Input_TextBox.ActualHeight);
+    }
+
+    private void TerminalWindow_MouseDown(object sender, MouseEventArgs e)
+    {
+        if (!_locked && e.LeftButton == MouseButtonState.Pressed)
+        {
+            DragMove();
+        }
+    }
+
+    private void TerminalWindow_LocationChanged(object sender, EventArgs e)
+    {
+        UpdateTerminalDataTextBoxMargin();
+        _terminalWindowUiUpdate();
+    }
+
+    private void TerminalWindow_SizeChanged(object sender, RoutedEventArgs e)
+    {
+        UpdateTerminalDataTextBoxMargin();
+        _terminalWindowUiUpdate();
+    }
+
+    private void TerminalDataTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        TerminalData_TextBox.ScrollToEnd();
+    }
+
+    private async void InputTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.C && Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+        {
+            Input_TextBox.Clear();
+            e.Handled = true;
+            await _sendInterrupt();
+            return;
         }
 
-        public void SetWindowLocked(bool locked)
+        if (e.Key == Key.Up)
         {
-            _locked = locked;
-
-            if (locked)
+            if (_commandHistoryIndex + 1 < _commandHistory.Count)
             {
-                this.Background = Brushes.Transparent;
-                this.ResizeMode = ResizeMode.NoResize;
-                TerminalData_TextBox.IsHitTestVisible = true;
-            }
-            else
-            {
-                this.Background = Brushes.Gray;
-                this.ResizeMode = ResizeMode.CanResizeWithGrip;
-                TerminalData_TextBox.IsHitTestVisible = false;
-            }
-        }
-        #endregion
-
-        #region Event Handlers
-        private void TerminalWindow_MouseDown(object sender, MouseEventArgs e)
-        {
-            if (!_locked && e.LeftButton == MouseButtonState.Pressed)
-                this.DragMove();
-        }
-
-        private void TerminalWindow_LocationChanged(object sender, EventArgs e)
-        {
-            UpdateTerminalDataTextBoxMargin();
-
-            TerminalWindowUIUpdate();
-        }
-
-        private void TerminalWindow_SizeChanged(object sender, RoutedEventArgs e)
-        {
-            UpdateTerminalDataTextBoxMargin();
-
-            TerminalWindowUIUpdate();
-        }
-
-        private void TerminalDataTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            TerminalData_TextBox.ScrollToEnd();
-        }
-
-        private void InputTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            // Ctrl + C handling
-            if (e.Key.Equals(Key.C) && _ctrlDown)
-            {
-                _password = String.Empty;
-                _passwordMode = false;
-                Input_TextBox.Text = "";
-
-                KillProcess();
-
-                e.Handled = true;
-            }
-            else if (e.Key.Equals(Key.LeftCtrl))
-            {
-                _ctrlDown = true;
+                _commandHistoryIndex++;
+                SetInputText(_commandHistory[_commandHistoryIndex]);
             }
 
-            // Command cycling
-            else if (e.Key.Equals(Key.Up))
-            {
-                if (_commandHistoryIndex + 1 < _commandHistory.Count)
-                {
-                    _commandHistoryIndex++;
+            e.Handled = true;
+            return;
+        }
 
-                    Input_TextBox.Text = _commandHistory[_commandHistoryIndex];
-                    Input_TextBox.CaretIndex = Input_TextBox.Text.Length;
-                }
+        if (e.Key == Key.Down)
+        {
+            if (_commandHistoryIndex > 0)
+            {
+                _commandHistoryIndex--;
+                SetInputText(_commandHistory[_commandHistoryIndex]);
             }
-
-            else if (e.Key.Equals(Key.Down))
+            else if (_commandHistoryIndex == 0)
             {
-                if (_commandHistoryIndex - 1 >= 0)
-                {
-                    _commandHistoryIndex--;
-
-                    Input_TextBox.Text = _commandHistory[_commandHistoryIndex];
-                    Input_TextBox.CaretIndex = Input_TextBox.Text.Length;
-                }
-            }
-
-            // Enter/Return command
-            else if (e.Key.Equals(Key.Return) || e.Key.Equals(Key.Enter))
-            {
-                _commandHistory.Insert(0, Input_TextBox.Text);
                 _commandHistoryIndex = -1;
-
-                SendCommand(Input_TextBox.Text);
-
-                Input_TextBox.Text = "";
+                Input_TextBox.Clear();
             }
 
-
-            // Backspace password data
-            else if (e.Key.Equals(Key.Back))
-            {
-                if (_passwordMode)
-                    if (_password.Length > 0)
-                        _password = _password.Substring(0, _password.Length - 1);
-            }
+            e.Handled = true;
+            return;
         }
 
-        private void InputTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        if (e.Key is not (Key.Return or Key.Enter))
         {
-            // Password handling
-            if (_passwordMode)
+            return;
+        }
+
+        string command = Input_TextBox.Text;
+        Input_TextBox.Clear();
+        e.Handled = true;
+
+        if (!string.IsNullOrEmpty(command))
+        {
+            _commandHistory.Insert(0, command);
+            if (_commandHistory.Count > MaxCommandHistoryEntries)
             {
-                if (!e.Text.Equals(String.Empty))
-                {
-                    foreach (char c in e.Text)
-                        if (c == '\n' || c == '\r' || !char.IsLetterOrDigit(c) && !char.IsSymbol(c) && !char.IsWhiteSpace(c) && !char.IsPunctuation(c))
-                            return;
-
-                    _password += e.Text;
-
-                    int caretIndex = Input_TextBox.CaretIndex;
-                    Input_TextBox.Text = Input_TextBox.Text + "*";
-                    Input_TextBox.CaretIndex = caretIndex + 1;
-
-                    e.Handled = true;
-                }
+                _commandHistory.RemoveAt(_commandHistory.Count - 1);
             }
         }
 
-        private void InputTextBox_PreviewKeyUp(object sender, KeyEventArgs e)
-        {
-            if (e.Key.Equals(Key.LeftCtrl))
-            {
-                _ctrlDown = false;
-            }
-        }
+        _commandHistoryIndex = -1;
+        await _sendCommand(command);
+    }
 
-        private void TerminalWindow_Loaded(object sender, EventArgs e)
-        {
-            UpdateTerminalDataTextBoxMargin();
-        }
-        #endregion
+    private void TerminalWindow_Loaded(object sender, EventArgs e)
+    {
+        UpdateTerminalDataTextBoxMargin();
+    }
+
+    private void SetInputText(string text)
+    {
+        Input_TextBox.Text = text;
+        Input_TextBox.CaretIndex = text.Length;
     }
 }

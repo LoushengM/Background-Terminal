@@ -31,8 +31,6 @@
             BorderThickness="0"
             Focusable="True"
             FontFamily="Consolas"
-            PreviewKeyDown="InputTextBox_PreviewKeyDown"
-            PreviewKeyUp="InputTextBox_PreviewKeyUp"
-            PreviewTextInput="InputTextBox_PreviewTextInput" />
+            PreviewKeyDown="InputTextBox_PreviewKeyDown" />
     </Grid>
 </Window>

@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Forms;
 using System.Windows.Interop;
 
 namespace Background_Terminal
@@ -49,8 +45,7 @@ namespace Background_Terminal
         private const int WM_KEYDOWN = 0x0100;
         private const int WM_SYSKEYDOWN = 0x0104;
 
-        public delegate void KeyTriggeredProc(int keyCode);
-        public static KeyTriggeredProc KeyTriggered;
+        public static Action<int>? KeyTriggered;
 
         private delegate IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam);
         private static HookProc _proc = HookCallback;
@@ -63,7 +58,14 @@ namespace Background_Terminal
             {
                 int vkCode = Marshal.ReadInt32(lParam);
 
-                KeyTriggered(vkCode);
+                try
+                {
+                    KeyTriggered?.Invoke(vkCode);
+                }
+                catch
+                {
+                    // Exceptions must not cross the unmanaged hook callback boundary.
+                }
             }
 
             return CallNextHookEx(_hookID, nCode, wParam, lParam);
@@ -73,8 +75,13 @@ namespace Background_Terminal
         {
             using (Process curProcess = Process.GetCurrentProcess())
             {
-                using (ProcessModule curModule = curProcess.MainModule)
+                using (ProcessModule? curModule = curProcess.MainModule)
                 {
+                    if (curModule is null)
+                    {
+                        throw new InvalidOperationException("Unable to locate the current process module.");
+                    }
+
                     return SetWindowsHookEx(HookType.WH_KEYBOARD_LL, hookProc, GetModuleHandle(curModule.ModuleName), 0);
                 }
             }
@@ -82,12 +89,23 @@ namespace Background_Terminal
 
         public static void SetKeyhook()
         {
+            DestroyKeyhook();
             _hookID = SetHook(_proc);
+            if (_hookID == IntPtr.Zero)
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "Unable to install the global keyboard hook.");
+            }
         }
 
         public static void DestroyKeyhook()
         {
+            if (_hookID == IntPtr.Zero)
+            {
+                return;
+            }
+
             UnhookWindowsHookEx(_hookID);
+            _hookID = IntPtr.Zero;
         }
         #endregion
 
