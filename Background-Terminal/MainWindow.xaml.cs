@@ -154,6 +154,7 @@ public partial class MainWindow : Window
         _terminalWindow.Input_TextBox.FontFamily = fontFamily;
         _terminalWindow.TerminalData_TextBox.Foreground = foreground;
         _terminalWindow.Input_TextBox.Foreground = foreground;
+        _terminalWindow.BlockCursor.Fill = foreground;
         Brush background = (Brush?)BrushConverter.ConvertFromString(_settings.BackgroundColor)
             ?? new SolidColorBrush(Color.FromArgb(0xD9, 0x1E, 0x1E, 0x1E));
         _terminalWindow.ApplyAppearance(background, _settings.WindowOpacity);

@@ -53,6 +53,7 @@ public sealed class SettingsService
                 ?? throw new JsonException("The settings document was empty.");
 
             Normalize(settings);
+            Save(settings);
             return new SettingsLoadResult(settings);
         }
         catch (Exception exception) when (
