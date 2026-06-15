@@ -35,7 +35,6 @@
             PreviewKeyDown="InputTextBox_PreviewKeyDown" />
         <Rectangle
             x:Name="BlockCursor"
-            VerticalAlignment="Bottom"
             Fill="White"
             IsHitTestVisible="False"
             Visibility="Collapsed" />
