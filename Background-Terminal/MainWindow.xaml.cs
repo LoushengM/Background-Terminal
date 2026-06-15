@@ -133,6 +133,8 @@ public partial class MainWindow : Window
         FontSize_TextBox.Text = _settings.FontSize.ToString(CultureInfo.CurrentCulture);
         FontColor_TextBox.Text = _settings.FontColor;
         FontFamily_TextBox.Text = _settings.FontFamily;
+        BackgroundColor_TextBox.Text = _settings.BackgroundColor;
+        Opacity_TextBox.Text = _settings.WindowOpacity.ToString(CultureInfo.CurrentCulture);
         PosX_TextBox.Text = _settings.PosX.ToString(CultureInfo.CurrentCulture);
         PosY_TextBox.Text = _settings.PosY.ToString(CultureInfo.CurrentCulture);
         Width_TextBox.Text = _settings.Width.ToString(CultureInfo.CurrentCulture);
@@ -152,6 +154,9 @@ public partial class MainWindow : Window
         _terminalWindow.Input_TextBox.FontFamily = fontFamily;
         _terminalWindow.TerminalData_TextBox.Foreground = foreground;
         _terminalWindow.Input_TextBox.Foreground = foreground;
+        Brush background = (Brush?)BrushConverter.ConvertFromString(_settings.BackgroundColor)
+            ?? new SolidColorBrush(Color.FromArgb(0xD9, 0x1E, 0x1E, 0x1E));
+        _terminalWindow.ApplyAppearance(background, _settings.WindowOpacity);
         _terminalWindow.Left = _settings.PosX;
         _terminalWindow.Top = _settings.PosY;
         _terminalWindow.Width = _settings.Width;
@@ -627,6 +632,22 @@ public partial class MainWindow : Window
             return false;
         }
 
+        if (!SettingsService.IsValidHexColor(BackgroundColor_TextBox.Text))
+        {
+            ShowValidationError("Background color must be a 6- or 8-digit hexadecimal color.");
+            return false;
+        }
+
+        if (!TryReadNumber(
+                Opacity_TextBox.Text,
+                0.0,
+                1.0,
+                "Opacity must be a finite number from 0.0 through 1.0.",
+                out double opacity))
+        {
+            return false;
+        }
+
         FontFamily? fontFamily = Fonts.SystemFontFamilies.FirstOrDefault(
             family => string.Equals(
                 family.Source,
@@ -658,6 +679,8 @@ public partial class MainWindow : Window
             FontSize = fontSize,
             FontColor = FontColor_TextBox.Text,
             FontFamily = fontFamily.Source,
+            BackgroundColor = BackgroundColor_TextBox.Text,
+            WindowOpacity = Math.Round(opacity, 4),
             PosX = posX,
             PosY = posY,
             Width = width,

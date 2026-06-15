@@ -130,6 +130,13 @@ public sealed class SettingsService
         settings.FontFamily = string.IsNullOrWhiteSpace(settings.FontFamily)
             ? "Consolas"
             : settings.FontFamily.Trim();
+        settings.BackgroundColor = IsValidHexColor(settings.BackgroundColor)
+            ? settings.BackgroundColor
+            : "#D91E1E1E";
+        settings.WindowOpacity = settings.WindowOpacity is >= 0.0 and <= 1.0
+            && double.IsFinite(settings.WindowOpacity)
+            ? settings.WindowOpacity
+            : 1.0;
         settings.PosX = double.IsFinite(settings.PosX) ? settings.PosX : 0;
         settings.PosY = double.IsFinite(settings.PosY) ? settings.PosY : 0;
         settings.Width = IsInRange(settings.Width, 100, 10_000) ? settings.Width : 500;

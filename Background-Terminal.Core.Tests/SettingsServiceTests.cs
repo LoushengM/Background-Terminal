@@ -138,6 +138,8 @@ public sealed class SettingsServiceTests
             FontSize = double.NaN,
             FontColor = "blue",
             FontFamily = "\t",
+            BackgroundColor = "not-a-color",
+            WindowOpacity = 2.5,
             PosX = double.PositiveInfinity,
             PosY = double.NegativeInfinity,
             Width = 99,
@@ -176,6 +178,8 @@ public sealed class SettingsServiceTests
         Assert.AreEqual(12, settings.FontSize);
         Assert.AreEqual("#FFFFFFFF", settings.FontColor);
         Assert.AreEqual("Consolas", settings.FontFamily);
+        Assert.AreEqual("#D91E1E1E", settings.BackgroundColor);
+        Assert.AreEqual(1.0, settings.WindowOpacity);
         Assert.AreEqual(0, settings.PosX);
         Assert.AreEqual(0, settings.PosY);
         Assert.AreEqual(500, settings.Width);
