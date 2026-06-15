@@ -53,7 +53,15 @@ public sealed class SettingsService
                 ?? throw new JsonException("The settings document was empty.");
 
             Normalize(settings);
-            Save(settings);
+            try
+            {
+                Save(settings);
+            }
+            catch (Exception exception) when (
+                exception is IOException or UnauthorizedAccessException)
+            {
+                // Best-effort save-back; normalized settings remain correct in memory.
+            }
             return new SettingsLoadResult(settings);
         }
         catch (Exception exception) when (

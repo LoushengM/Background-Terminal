@@ -33,14 +33,11 @@
             FontFamily="Consolas"
             CaretBrush="Transparent"
             PreviewKeyDown="InputTextBox_PreviewKeyDown" />
-        <Canvas
-            x:Name="CursorCanvas"
+        <Rectangle
+            x:Name="BlockCursor"
             VerticalAlignment="Bottom"
-            IsHitTestVisible="False">
-            <Rectangle
-                x:Name="BlockCursor"
-                Fill="White"
-                Visibility="Collapsed" />
-        </Canvas>
+            Fill="White"
+            IsHitTestVisible="False"
+            Visibility="Collapsed" />
     </Grid>
 </Window>

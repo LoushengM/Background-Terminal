@@ -216,12 +216,13 @@ public partial class TerminalWindow : Window
 
         int caretIndex = Input_TextBox.CaretIndex;
         Rect rect = Input_TextBox.GetRectFromCharacterIndex(caretIndex);
-
-        Point offset = Input_TextBox.TranslatePoint(
-            new Point(0, 0), CursorCanvas);
-
-        Canvas.SetLeft(BlockCursor, offset.X + rect.X);
-        Canvas.SetTop(BlockCursor, offset.Y + rect.Y);
+        Point textBoxOffset = Input_TextBox.TranslatePoint(
+            new Point(0, 0), (UIElement)Input_TextBox.Parent);
+        BlockCursor.Margin = new Thickness(
+            textBoxOffset.X + rect.X,
+            textBoxOffset.Y + rect.Y,
+            0,
+            0);
         BlockCursor.Width = Math.Max(rect.Width, 2);
         BlockCursor.Height = rect.Height;
         BlockCursor.Visibility = _cursorVisible
