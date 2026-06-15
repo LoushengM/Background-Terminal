@@ -28,7 +28,13 @@
   <Fragment>
     <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
       <Component Id="AppComponent" Guid="F06374FC-ED82-4AD9-BA08-560103221083" Win64="$(var.Win64)">
-        <File Id="AppFile" Name="Background-Terminal.exe" Source="$(var.ReleaseExecutablePath)" KeyPath="yes" />
+        <File Id="AppFile" Name="Background-Terminal.dll" Source="$(var.ReleaseAssemblyPath)\Background-Terminal.dll" KeyPath="yes" />
+        <File Id="AppExe" Name="Background-Terminal.exe" Source="$(var.ReleaseAssemblyPath)\Background-Terminal.exe" />
+        <File Id="CoreDll" Name="Background-Terminal.Core.dll" Source="$(var.ReleaseAssemblyPath)\Background-Terminal.Core.dll" />
+        <File Id="CoreMeterDll" Name="CoreMeter.dll" Source="$(var.ReleaseAssemblyPath)\CoreMeter.dll" />
+        <File Id="NotifyIconDll" Name="Hardcodet.NotifyIcon.Wpf.dll" Source="$(var.ReleaseAssemblyPath)\Hardcodet.NotifyIcon.Wpf.dll" />
+        <File Id="DepsJson" Name="Background-Terminal.deps.json" Source="$(var.ReleaseAssemblyPath)\Background-Terminal.deps.json" />
+        <File Id="RuntimeConfig" Name="Background-Terminal.runtimeconfig.json" Source="$(var.ReleaseAssemblyPath)\Background-Terminal.runtimeconfig.json" />
       </Component>
       <Component Id="RegistryEntries" Guid="27A07591-AF2E-4F62-AC49-16DCA78C9724" Win64="$(var.Win64)">
         <RegistryKey Root="HKCU" Key="Software\Microsoft\Windows\CurrentVersion\Run">
@@ -36,7 +42,7 @@
         </RegistryKey>
       </Component>
     </ComponentGroup>
-    <CustomAction Id="EXECUTE_AFTER_FINALIZE" Execute="immediate" Impersonate="yes" Return="asyncNoWait" FileKey="AppFile" ExeCommand="" />
+    <CustomAction Id="EXECUTE_AFTER_FINALIZE" Execute="immediate" Impersonate="yes" Return="asyncNoWait" FileKey="AppExe" ExeCommand="" />
 
     <InstallExecuteSequence>
       <Custom Action="EXECUTE_AFTER_FINALIZE" After="InstallFinalize">NOT Installed</Custom>
