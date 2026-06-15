@@ -49,6 +49,11 @@ public partial class TerminalWindow : Window
         Opacity = _userOpacity;
     }
 
+    public void SetCursorColor(Brush color)
+    {
+        BlockCursor.Fill = color;
+    }
+
     public void SetWindowLocked(bool locked)
     {
         _locked = locked;
