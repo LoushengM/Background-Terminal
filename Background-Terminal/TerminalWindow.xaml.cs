@@ -4,14 +4,12 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Threading;
 
 namespace Background_Terminal;
 
 public partial class TerminalWindow : Window
 {
     private const int MaxCommandHistoryEntries = 500;
-    private const int CursorBlinkIntervalMs = 530;
 
     private readonly Func<string, Task> _sendCommand;
     private readonly Func<Task> _sendInterrupt;
@@ -22,8 +20,6 @@ public partial class TerminalWindow : Window
     private bool _locked;
     private Brush _userBackground = new SolidColorBrush(Color.FromArgb(0xD9, 0x1E, 0x1E, 0x1E));
     private double _userOpacity = 1.0;
-    private DispatcherTimer? _cursorBlinkTimer;
-    private bool _cursorVisible;
 
     public TerminalWindow(
         Func<string, Task> sendCommand,
@@ -35,10 +31,6 @@ public partial class TerminalWindow : Window
         _sendCommand = sendCommand;
         _sendInterrupt = sendInterrupt;
         _terminalWindowUiUpdate = terminalWindowUiUpdate;
-
-        Input_TextBox.GotFocus += StartCursorBlink;
-        Input_TextBox.LostFocus += StopCursorBlink;
-        Input_TextBox.LayoutUpdated += UpdateBlockCursor;
     }
 
     public void ApplyAppearance(Brush background, double opacity)
@@ -47,11 +39,6 @@ public partial class TerminalWindow : Window
         _userOpacity = Math.Clamp(opacity, 0.0, 1.0);
         Background = _userBackground;
         Opacity = _userOpacity;
-    }
-
-    public void SetCursorColor(Brush color)
-    {
-        BlockCursor.Fill = color;
     }
 
     public void SetWindowLocked(bool locked)
@@ -170,63 +157,5 @@ public partial class TerminalWindow : Window
     {
         Input_TextBox.Text = text;
         Input_TextBox.CaretIndex = text.Length;
-    }
-
-    private void StartCursorBlink(object? sender, RoutedEventArgs e)
-    {
-        if (_cursorBlinkTimer is not null)
-        {
-            return;
-        }
-
-        _cursorVisible = true;
-        _cursorBlinkTimer = new DispatcherTimer(
-            TimeSpan.FromMilliseconds(CursorBlinkIntervalMs),
-            DispatcherPriority.Normal,
-            CursorBlinkTick,
-            Dispatcher);
-        _cursorBlinkTimer.Start();
-        UpdateBlockCursor(this, EventArgs.Empty);
-    }
-
-    private void StopCursorBlink(object? sender, RoutedEventArgs e)
-    {
-        if (_cursorBlinkTimer is not null)
-        {
-            _cursorBlinkTimer.Stop();
-            _cursorBlinkTimer = null;
-        }
-
-        _cursorVisible = false;
-        BlockCursor.Visibility = Visibility.Collapsed;
-    }
-
-    private void CursorBlinkTick(object? sender, EventArgs e)
-    {
-        _cursorVisible = !_cursorVisible;
-        UpdateBlockCursor(this, EventArgs.Empty);
-    }
-
-    private void UpdateBlockCursor(object? sender, EventArgs e)
-    {
-        if (_cursorBlinkTimer is null)
-        {
-            return;
-        }
-
-        int caretIndex = Input_TextBox.CaretIndex;
-        Rect rect = Input_TextBox.GetRectFromCharacterIndex(caretIndex);
-        Point textBoxOffset = Input_TextBox.TranslatePoint(
-            new Point(0, 0), (UIElement)Input_TextBox.Parent);
-        BlockCursor.Margin = new Thickness(
-            textBoxOffset.X + rect.X,
-            textBoxOffset.Y + rect.Y,
-            0,
-            0);
-        BlockCursor.Width = Math.Max(rect.Width, 2);
-        BlockCursor.Height = rect.Height;
-        BlockCursor.Visibility = _cursorVisible
-            ? Visibility.Visible
-            : Visibility.Collapsed;
     }
 }

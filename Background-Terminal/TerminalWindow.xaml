@@ -31,12 +31,6 @@
             BorderThickness="0"
             Focusable="True"
             FontFamily="Consolas"
-            CaretBrush="Transparent"
             PreviewKeyDown="InputTextBox_PreviewKeyDown" />
-        <Rectangle
-            x:Name="BlockCursor"
-            Fill="White"
-            IsHitTestVisible="False"
-            Visibility="Collapsed" />
     </Grid>
 </Window>
