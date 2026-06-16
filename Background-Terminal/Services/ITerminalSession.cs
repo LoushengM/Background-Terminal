@@ -22,3 +22,8 @@ public interface ITerminalSession : IAsyncDisposable
     Task SendInterruptAsync();
     Task StopAsync();
 }
+
+internal interface IWorkingDirectoryTerminalSession
+{
+    string? WorkingDirectory { get; set; }
+}

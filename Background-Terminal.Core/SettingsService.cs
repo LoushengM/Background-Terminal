@@ -65,7 +65,14 @@ public sealed class SettingsService
             return new SettingsLoadResult(settings);
         }
         catch (Exception exception) when (
-            exception is IOException or UnauthorizedAccessException or JsonException)
+            exception is IOException or UnauthorizedAccessException)
+        {
+            BackgroundTerminalSettings defaults = new();
+            return new SettingsLoadResult(
+                defaults,
+                $"Settings could not be loaded; existing settings were left untouched: {exception.Message}");
+        }
+        catch (JsonException)
         {
             string? backupPath = TryBackUpInvalidConfig();
             BackgroundTerminalSettings defaults = new();
@@ -102,7 +109,9 @@ public sealed class SettingsService
             Directory.CreateDirectory(directory);
         }
 
-        string tempPath = ConfigPath + ".tmp";
+        string tempPath = Path.Combine(
+            directory ?? string.Empty,
+            $"{Path.GetFileName(ConfigPath)}.{Guid.NewGuid():N}.staging");
         try
         {
             File.WriteAllText(tempPath, JsonSerializer.Serialize(settings, JsonOptions));
@@ -130,6 +139,9 @@ public sealed class SettingsService
         settings.ProcessPath = string.IsNullOrWhiteSpace(settings.ProcessPath)
             ? "cmd.exe"
             : settings.ProcessPath.Trim();
+        settings.WorkingDirectory = string.IsNullOrWhiteSpace(settings.WorkingDirectory)
+            ? string.Empty
+            : settings.WorkingDirectory.Trim();
         settings.Key1 = settings.Key1 <= 0 ? 162 : settings.Key1;
         settings.Key2 = settings.Key2 <= 0 ? 66 : settings.Key2;
         settings.FontSize = IsInRange(settings.FontSize, 6, 96) ? settings.FontSize : 12;

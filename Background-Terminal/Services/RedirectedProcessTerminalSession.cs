@@ -9,7 +9,9 @@ using System.Threading.Tasks;
 
 namespace Background_Terminal;
 
-public sealed class RedirectedProcessTerminalSession : ITerminalSession
+public sealed class RedirectedProcessTerminalSession :
+    ITerminalSession,
+    IWorkingDirectoryTerminalSession
 {
     private readonly SemaphoreSlim _lifecycleGate = new(1, 1);
     private readonly SemaphoreSlim _writeGate = new(1, 1);
@@ -22,6 +24,7 @@ public sealed class RedirectedProcessTerminalSession : ITerminalSession
 
     public bool IsRunning => _process is { HasExited: false };
     public string InputNewLine => Environment.NewLine;
+    public string? WorkingDirectory { get; set; }
 
     public async Task StartAsync(
         string commandLine,
@@ -42,8 +45,9 @@ public sealed class RedirectedProcessTerminalSession : ITerminalSession
 
             ProcessStartInfo startInfo = new(arguments[0])
             {
-                WorkingDirectory = Environment.GetFolderPath(
-                    Environment.SpecialFolder.MyDocuments),
+                WorkingDirectory = ResolveWorkingDirectory(WorkingDirectory)
+                    ?? Environment.GetFolderPath(
+                        Environment.SpecialFolder.MyDocuments),
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardInput = true,
@@ -105,21 +109,27 @@ public sealed class RedirectedProcessTerminalSession : ITerminalSession
             return;
         }
 
+        // Redirected stdin cannot reliably deliver a console Ctrl+C, so
+        // interrupt falls back to terminating the whole process tree.
         try
         {
-            await process.StandardInput.WriteAsync("\u0003").ConfigureAwait(false);
-            await process.StandardInput.FlushAsync().ConfigureAwait(false);
-            await Task.Delay(150).ConfigureAwait(false);
+            process.Kill(entireProcessTree: true);
         }
-        catch (Exception exception) when (
-            exception is IOException or InvalidOperationException)
+        catch (InvalidOperationException)
         {
+            return;
+        }
+        catch (NotSupportedException)
+        {
+            return;
         }
 
-        if (!process.HasExited)
+        try
         {
-            process.Kill(entireProcessTree: true);
             await process.WaitForExitAsync().ConfigureAwait(false);
+        }
+        catch (InvalidOperationException)
+        {
         }
     }
 
@@ -290,6 +300,18 @@ public sealed class RedirectedProcessTerminalSession : ITerminalSession
         {
             LocalFree(argumentVector);
         }
+    }
+
+    private static string? ResolveWorkingDirectory(string? workingDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(workingDirectory))
+        {
+            return null;
+        }
+
+        string expanded = Environment.ExpandEnvironmentVariables(
+            workingDirectory.Trim());
+        return Path.GetFullPath(expanded);
     }
 
     [DllImport(

@@ -15,7 +15,9 @@ namespace Background_Terminal
     /// <summary>
     /// Runs a process attached to a Windows pseudo console.
     /// </summary>
-    public sealed class ConPtyTerminalSession : ITerminalSession
+    public sealed class ConPtyTerminalSession :
+        ITerminalSession,
+        IWorkingDirectoryTerminalSession
     {
         private const int ErrorBrokenPipe = 109;
         private const int ErrorNoData = 232;
@@ -24,6 +26,9 @@ namespace Background_Terminal
         private const uint CreateUnicodeEnvironment = 0x00000400;
         private const int ProcThreadAttributePseudoConsole = 0x00020016;
         private const uint StillActive = 259;
+        // One bounded cleanup window governs graceful exit, pseudo-console close,
+        // and the final forced-termination fallback.
+        private static readonly TimeSpan CleanupTimeout = TimeSpan.FromSeconds(5);
 
         private readonly object _syncRoot = new object();
         private readonly SemaphoreSlim _lifecycleGate = new SemaphoreSlim(1, 1);
@@ -36,6 +41,8 @@ namespace Background_Terminal
         public event Action<int>? Exited;
 
         public string InputNewLine => "\r";
+
+        public string? WorkingDirectory { get; set; }
 
         public bool IsRunning
         {
@@ -104,7 +111,11 @@ namespace Background_Terminal
                 try
                 {
                     session = await Task.Run(
-                        () => CreateSession(commandLine, (short)columns, (short)rows),
+                        () => CreateSession(
+                            commandLine,
+                            (short)columns,
+                            (short)rows,
+                            WorkingDirectory),
                         CancellationToken.None).ConfigureAwait(false);
                 }
                 catch (EntryPointNotFoundException exception)
@@ -220,22 +231,22 @@ namespace Background_Terminal
 
                 session.CloseInput();
 
-                if (!await CompletesWithinAsync(session.ExitCompletion.Task, 300).ConfigureAwait(false))
+                if (!await CompletesWithinAsync(session.ExitCompletion.Task, CleanupTimeout).ConfigureAwait(false))
                 {
-                    _ = session.ClosePseudoConsoleAsync();
+                    await session.ClosePseudoConsoleAsync().ConfigureAwait(false);
                 }
 
-                if (!await CompletesWithinAsync(session.ExitCompletion.Task, 2000).ConfigureAwait(false))
+                if (!await CompletesWithinAsync(session.ExitCompletion.Task, CleanupTimeout).ConfigureAwait(false))
                 {
                     TryTerminateProcess(session, 1);
                 }
 
-                if (!await CompletesWithinAsync(session.ExitCompletion.Task, 5000).ConfigureAwait(false))
+                if (!await CompletesWithinAsync(session.ExitCompletion.Task, CleanupTimeout).ConfigureAwait(false))
                 {
-                    throw new TimeoutException("The terminal process did not exit after the pseudo console was closed.");
+                    throw new TimeoutException("The terminal process did not exit during cleanup.");
                 }
 
-                if (!await CompletesWithinAsync(session.Finished.Task, 5000).ConfigureAwait(false))
+                if (!await CompletesWithinAsync(session.Finished.Task, CleanupTimeout).ConfigureAwait(false))
                 {
                     throw new TimeoutException("The terminal session did not finish releasing its resources.");
                 }
@@ -246,7 +257,11 @@ namespace Background_Terminal
             }
         }
 
-        private static SessionState CreateSession(string commandLine, short columns, short rows)
+        private static SessionState CreateSession(
+            string commandLine,
+            short columns,
+            short rows,
+            string? workingDirectory)
         {
             IReadOnlyList<string> arguments = ParseCommandLine(commandLine);
             string applicationPath = ResolveExecutable(arguments[0]);
@@ -285,7 +300,8 @@ namespace Background_Terminal
 
                 ProcessInformation processInformation = CreateAttachedProcess(
                     normalizedCommandLine,
-                    pseudoConsole);
+                    pseudoConsole,
+                    ResolveWorkingDirectory(workingDirectory));
 
                 processHandle = new SafeKernelHandle(processInformation.Process, true);
                 threadHandle = new SafeKernelHandle(processInformation.Thread, true);
@@ -319,7 +335,8 @@ namespace Background_Terminal
 
         private static ProcessInformation CreateAttachedProcess(
             string commandLine,
-            SafePseudoConsoleHandle pseudoConsole)
+            SafePseudoConsoleHandle pseudoConsole,
+            string? workingDirectory)
         {
             IntPtr attributeList = IntPtr.Zero;
             IntPtr attributeListSize = IntPtr.Zero;
@@ -368,7 +385,7 @@ namespace Background_Terminal
                     false,
                     ExtendedStartupInfoPresent | CreateUnicodeEnvironment,
                     IntPtr.Zero,
-                    null,
+                    workingDirectory,
                     ref startupInfo,
                     out ProcessInformation processInformation))
                 {
@@ -386,6 +403,18 @@ namespace Background_Terminal
                 }
 
             }
+        }
+
+        private static string? ResolveWorkingDirectory(string? workingDirectory)
+        {
+            if (string.IsNullOrWhiteSpace(workingDirectory))
+            {
+                return null;
+            }
+
+            string expanded = Environment.ExpandEnvironmentVariables(
+                workingDirectory.Trim());
+            return Path.GetFullPath(expanded);
         }
 
         private void StartMonitoring(SessionState session)
@@ -441,15 +470,12 @@ namespace Background_Terminal
             {
                 session.CloseInput();
 
-                // Fast commands can exit while their final VT output is still queued.
-                // Let the active reader drain before closing the pseudo console.
-                await Task.Delay(750).ConfigureAwait(false);
                 await session.ClosePseudoConsoleAsync().ConfigureAwait(false);
 
-                if (!await CompletesWithinAsync(session.OutputTask, 2000).ConfigureAwait(false))
+                if (!await CompletesWithinAsync(session.OutputTask, CleanupTimeout).ConfigureAwait(false))
                 {
                     session.CloseOutput();
-                    await CompletesWithinAsync(session.OutputTask, 1000).ConfigureAwait(false);
+                    await CompletesWithinAsync(session.OutputTask, CleanupTimeout).ConfigureAwait(false);
                 }
 
                 session.CloseOutput();
@@ -600,7 +626,7 @@ namespace Background_Terminal
             }
         }
 
-        private static async Task<bool> CompletesWithinAsync(Task task, int milliseconds)
+        private static async Task<bool> CompletesWithinAsync(Task task, TimeSpan timeout)
         {
             if (task.IsCompleted)
             {
@@ -608,14 +634,15 @@ namespace Background_Terminal
                 return true;
             }
 
-            Task completed = await Task.WhenAny(task, Task.Delay(milliseconds)).ConfigureAwait(false);
-            if (!ReferenceEquals(completed, task))
+            try
+            {
+                await task.WaitAsync(timeout).ConfigureAwait(false);
+                return true;
+            }
+            catch (TimeoutException)
             {
                 return false;
             }
-
-            await task.ConfigureAwait(false);
-            return true;
         }
 
         private static void TryTerminateProcess(SessionState session, uint exitCode)

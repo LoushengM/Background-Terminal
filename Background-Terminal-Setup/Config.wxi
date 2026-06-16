@@ -3,10 +3,10 @@
   <?if $(var.Platform) = x64 ?>
   <?define ProductName = "Background Terminal (64 bit)" ?>
   <?define Win64 = "yes" ?>
-  <?define ReleaseAssemblyPath = "../Background-Terminal/bin/Release/net10.0-windows/win-x64" ?>
+  <?define ReleaseAssemblyPath = "../Background-Terminal/bin/Release/net10.0-windows/win-x64/publish" ?>
   <?else ?>
   <?define ProductName = "Background Terminal" ?>
   <?define Win64 = "no" ?>
-  <?define ReleaseAssemblyPath = "../Background-Terminal/bin/Release/net10.0-windows/win-x86" ?>
+  <?define ReleaseAssemblyPath = "../Background-Terminal/bin/Release/net10.0-windows/win-x86/publish" ?>
   <?endif ?>
 </Include>

@@ -16,10 +16,51 @@ public sealed class BuiltInCommandParserTests
             BuiltInCommandParser.Parse("ssh-keygen example.com").Kind);
 
         BuiltInCommandResult result =
-            BuiltInCommandParser.Parse(@"BGT NEWLINE \r\n");
+            BuiltInCommandParser.Parse(@"BGT NEWLINE \r\n\t\\");
 
         Assert.AreEqual(BuiltInCommandKind.SetNewline, result.Kind);
-        Assert.AreEqual("\r\n", result.Newline);
+        Assert.AreEqual("\r\n\t\\", result.Newline);
+        Assert.IsNull(result.Error);
+    }
+
+    [TestMethod]
+    [DataRow(@"bgt newline \r", "\r")]
+    [DataRow(@"bgt newline \n", "\n")]
+    [DataRow(@"bgt newline \t", "\t")]
+    [DataRow(@"bgt newline \\", "\\")]
+    public void Parse_SupportedEscapes_AreDecoded(
+        string command,
+        string expectedNewline)
+    {
+        BuiltInCommandResult result = BuiltInCommandParser.Parse(command);
+
+        Assert.AreEqual(BuiltInCommandKind.SetNewline, result.Kind);
+        Assert.AreEqual(expectedNewline, result.Newline);
+        Assert.IsNull(result.Error);
+    }
+
+    [TestMethod]
+    [DataRow("clear")]
+    [DataRow("cls")]
+    [DataRow("Clear-Host")]
+    public void Parse_ClearCommands_ReturnClearKind(string command)
+    {
+        BuiltInCommandResult result = BuiltInCommandParser.Parse(command);
+
+        Assert.AreEqual(BuiltInCommandKind.Clear, result.Kind);
+        Assert.IsNull(result.Newline);
+        Assert.IsNull(result.Error);
+    }
+
+    [TestMethod]
+    [DataRow("clear something")]
+    [DataRow("cls /?")]
+    public void Parse_ClearCommandsWithArguments_AreIgnored(string command)
+    {
+        BuiltInCommandResult result = BuiltInCommandParser.Parse(command);
+
+        Assert.AreEqual(BuiltInCommandKind.None, result.Kind);
+        Assert.IsNull(result.Newline);
         Assert.IsNull(result.Error);
     }
 
@@ -39,6 +80,7 @@ public sealed class BuiltInCommandParserTests
 
     [TestMethod]
     [DataRow(@"bgt newline \x")]
+    [DataRow(@"bgt newline \u0041")]
     [DataRow("bgt newline \\")]
     public void Parse_MalformedEscapes_ReturnValidationError(string command)
     {

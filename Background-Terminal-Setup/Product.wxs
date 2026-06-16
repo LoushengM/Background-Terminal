@@ -6,6 +6,7 @@
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of Background Terminal is already installed." />
     <MediaTemplate EmbedCab="yes"/>
+    <Property Id="LAUNCHAFTERINSTALL" Value="0" />
 
     <Feature Id="ProductFeature" Title="Background-Terminal-Setup" Level="1">
       <ComponentGroupRef Id="ProductComponents" />
@@ -29,7 +30,7 @@
     <CustomAction Id="EXECUTE_AFTER_FINALIZE" Execute="immediate" Impersonate="yes" Return="asyncNoWait" FileKey="File_Background_Terminal_exe" ExeCommand="" />
 
     <InstallExecuteSequence>
-      <Custom Action="EXECUTE_AFTER_FINALIZE" After="InstallFinalize">NOT Installed</Custom>
+      <Custom Action="EXECUTE_AFTER_FINALIZE" After="InstallFinalize">NOT Installed AND LAUNCHAFTERINSTALL=1</Custom>
     </InstallExecuteSequence>
   </Fragment>
 </Wix>

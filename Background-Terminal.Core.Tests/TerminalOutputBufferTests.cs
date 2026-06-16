@@ -23,6 +23,17 @@ public sealed class TerminalOutputBufferTests
     }
 
     [TestMethod]
+    public void Append_OverageInsideOlderChunk_KeepsNewestTail()
+    {
+        TerminalOutputBuffer buffer = new(5);
+
+        buffer.Append("abcde");
+        buffer.Append("f");
+
+        Assert.AreEqual("bcdef", buffer.Drain());
+    }
+
+    [TestMethod]
     public void Append_OneCharacterChunks_StaysBounded()
     {
         TerminalOutputBuffer buffer = new(5);
@@ -49,5 +60,16 @@ public sealed class TerminalOutputBufferTests
 
         buffer.Append("c");
         Assert.AreEqual("c", buffer.Drain());
+    }
+
+    [TestMethod]
+    public void Clear_RemovesPendingOutput()
+    {
+        TerminalOutputBuffer buffer = new(20);
+        buffer.Append("pending");
+
+        buffer.Clear();
+
+        Assert.AreEqual(string.Empty, buffer.Drain());
     }
 }

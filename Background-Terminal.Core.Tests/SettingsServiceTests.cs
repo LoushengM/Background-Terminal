@@ -50,6 +50,31 @@ public sealed class SettingsServiceTests
     }
 
     [TestMethod]
+    public void Load_ReadFailure_ReturnsDefaultsWithoutReplacingConfig()
+    {
+        using TempDirectory temp = new();
+        string configPath = Path.Combine(temp.Path, "settings.json");
+        const string originalJson = """{"ProcessPath":"locked.exe"}""";
+        File.WriteAllText(configPath, originalJson);
+        SettingsService service = new(configPath);
+
+        using (FileStream lockStream = new(
+            configPath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.None))
+        {
+            SettingsLoadResult result = service.Load();
+
+            AssertDefaultSettings(result.Settings);
+            StringAssert.Contains(result.RecoveryMessage, "left untouched");
+        }
+
+        Assert.AreEqual(originalJson, File.ReadAllText(configPath));
+        Assert.AreEqual(0, Directory.GetFiles(temp.Path, "settings.json.corrupt-*").Length);
+    }
+
+    [TestMethod]
     public void Load_PartialConfig_PreservesPropertyDefaultsAndNormalizesValues()
     {
         using TempDirectory temp = new();
@@ -70,6 +95,7 @@ public sealed class SettingsServiceTests
         Assert.AreEqual(18, result.Settings.FontSize);
         Assert.AreEqual("Cascadia Mono", result.Settings.FontFamily);
         Assert.AreEqual("cmd.exe", result.Settings.ProcessPath);
+        Assert.AreEqual(string.Empty, result.Settings.WorkingDirectory);
         Assert.AreEqual(500, result.Settings.Width);
         Assert.AreEqual(200_000, result.Settings.MaxOutputCharacters);
         Assert.IsNotNull(result.Settings.NewlineTriggers);
@@ -90,7 +116,7 @@ public sealed class SettingsServiceTests
 
         service.Save(settings);
 
-        Assert.IsFalse(File.Exists(configPath + ".tmp"));
+        Assert.AreEqual(0, Directory.GetFiles(temp.Path, "settings.json.*.staging").Length);
         BackgroundTerminalSettings? saved =
             JsonSerializer.Deserialize<BackgroundTerminalSettings>(
                 File.ReadAllText(configPath));
@@ -100,31 +126,38 @@ public sealed class SettingsServiceTests
     }
 
     [TestMethod]
-    public void Save_WhenStagingFails_LeavesExistingConfigUntouched()
+    public void Save_WhenDestinationIsLocked_LeavesExistingConfigUntouched()
     {
         using TempDirectory temp = new();
         string configPath = Path.Combine(temp.Path, "settings.json");
         const string originalJson = """{"ProcessPath":"old.exe"}""";
         File.WriteAllText(configPath, originalJson);
-        Directory.CreateDirectory(configPath + ".tmp");
         SettingsService service = new(configPath);
 
         Exception? saveException = null;
-        try
+        using (FileStream lockStream = new(
+            configPath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.None))
         {
-            service.Save(new BackgroundTerminalSettings
+            try
             {
-                ProcessPath = "new.exe"
-            });
-        }
-        catch (Exception exception)
-            when (exception is IOException or UnauthorizedAccessException)
-        {
-            saveException = exception;
+                service.Save(new BackgroundTerminalSettings
+                {
+                    ProcessPath = "new.exe"
+                });
+            }
+            catch (Exception exception)
+                when (exception is IOException or UnauthorizedAccessException)
+            {
+                saveException = exception;
+            }
         }
 
         Assert.IsNotNull(saveException);
         Assert.AreEqual(originalJson, File.ReadAllText(configPath));
+        Assert.AreEqual(0, Directory.GetFiles(temp.Path, "settings.json.*.staging").Length);
     }
 
     [TestMethod]
@@ -133,6 +166,7 @@ public sealed class SettingsServiceTests
         BackgroundTerminalSettings settings = new()
         {
             ProcessPath = " ",
+            WorkingDirectory = "\t",
             Key1 = 0,
             Key2 = -1,
             FontSize = double.NaN,
@@ -173,6 +207,7 @@ public sealed class SettingsServiceTests
         BackgroundTerminalSettings settings)
     {
         Assert.AreEqual("cmd.exe", settings.ProcessPath);
+        Assert.AreEqual(string.Empty, settings.WorkingDirectory);
         Assert.AreEqual(162, settings.Key1);
         Assert.AreEqual(66, settings.Key2);
         Assert.AreEqual(12, settings.FontSize);

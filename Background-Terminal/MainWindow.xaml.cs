@@ -12,7 +12,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -23,14 +22,17 @@ namespace Background_Terminal;
 public partial class MainWindow : Window
 {
     private static readonly BrushConverter BrushConverter = new();
+    private static readonly Regex PowerShellPromptRegex = new(
+        @"(?:^|[\r\n])(PS [^\r\n>]+>\s*)",
+        RegexOptions.CultureInvariant);
     private static readonly string ConfigPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "BackgroundTerminal",
         "config.json");
 
     private readonly SettingsService _settingsService;
-    private readonly TerminalWindow _terminalWindow;
-    private readonly CoreMeterUtility _coreMeterUtility;
+    private TerminalWindow _terminalWindow;
+    private CoreMeterUtility _coreMeterUtility;
     private readonly TerminalOutputBuffer _outputBuffer;
     private readonly VirtualTerminalTextFilter _terminalTextFilter = new();
     private readonly DispatcherTimer _outputTimer;
@@ -64,15 +66,10 @@ public partial class MainWindow : Window
             _settings.NewlineTriggers);
         DataContext = this;
 
-        _terminalWindow = new TerminalWindow(
-            SendCommandAsync,
-            SendInterruptAsync,
-            TerminalWindowUiUpdate);
-        _terminalWindow.Show();
-
-        IntPtr terminalHandle = new WindowInteropHelper(_terminalWindow).Handle;
-        Win32Interop.HideWindowFromAltTabMenu(terminalHandle);
-        _coreMeterUtility = new CoreMeterUtility(terminalHandle);
+        _terminalWindow = CreateTerminalWindow();
+        ApplySettingsToTerminalWindow();
+        ShowTerminalWindow(_terminalWindow);
+        _coreMeterUtility = CreateCoreMeterUtility(_terminalWindow);
         _coreMeterUtility.Lock();
         _terminalWindow.SetWindowLocked(true);
 
@@ -83,7 +80,6 @@ public partial class MainWindow : Window
             Dispatcher);
         _outputTimer.Start();
 
-        ApplySettingsToTerminalWindow();
         PopulateSettingsControls();
 
         Win32Interop.KeyTriggered = KeyTriggered;
@@ -106,6 +102,40 @@ public partial class MainWindow : Window
 
     public ObservableCollection<NewlineTrigger> NewlineTriggers { get; }
 
+    private TerminalWindow CreateTerminalWindow()
+    {
+        TerminalWindow terminalWindow = new(
+            SendCommandAsync,
+            SendInterruptAsync,
+            TerminalWindowUiUpdate);
+        terminalWindow.InputActivated += TerminalWindow_InputActivated;
+        terminalWindow.InputDeactivated += TerminalWindow_InputDeactivated;
+        return terminalWindow;
+    }
+
+    private static void ShowTerminalWindow(TerminalWindow terminalWindow)
+    {
+        terminalWindow.Show();
+        IntPtr terminalHandle = new WindowInteropHelper(terminalWindow).Handle;
+        Win32Interop.HideWindowFromAltTabMenu(terminalHandle);
+    }
+
+    private static CoreMeterUtility CreateCoreMeterUtility(TerminalWindow terminalWindow)
+    {
+        IntPtr terminalHandle = new WindowInteropHelper(terminalWindow).Handle;
+        return new CoreMeterUtility(terminalHandle);
+    }
+
+    private void TerminalWindow_InputActivated(object? sender, EventArgs e)
+    {
+        _terminalWindowActive = true;
+    }
+
+    private void TerminalWindow_InputDeactivated(object? sender, EventArgs e)
+    {
+        _terminalWindowActive = false;
+    }
+
     private SettingsLoadResult LoadSettings()
     {
         try
@@ -125,9 +155,20 @@ public partial class MainWindow : Window
     {
         _key1 = KeyInterop.KeyFromVirtualKey(_settings.Key1);
         _key2 = KeyInterop.KeyFromVirtualKey(_settings.Key2);
-        _regex = CreateRegex(_settings.RegexFilter);
+        try
+        {
+            _regex = CreateRegex(_settings.RegexFilter);
+        }
+        catch (ArgumentException)
+        {
+            _regex = null;
+            QueueOutput(
+                "The saved regex filter was invalid and has been disabled for this session." +
+                Environment.NewLine);
+        }
 
         Process_TextBox.Text = _settings.ProcessPath;
+        WorkingDirectory_TextBox.Text = _settings.WorkingDirectory;
         Key1_Button.Content = _key1?.ToString() ?? string.Empty;
         Key2_Button.Content = _key2?.ToString() ?? string.Empty;
         FontSize_TextBox.Text = _settings.FontSize.ToString(CultureInfo.CurrentCulture);
@@ -154,7 +195,7 @@ public partial class MainWindow : Window
         _terminalWindow.Input_TextBox.FontFamily = fontFamily;
         _terminalWindow.TerminalData_TextBox.Foreground = foreground;
         _terminalWindow.Input_TextBox.Foreground = foreground;
-        _terminalWindow.Input_TextBox.CaretBrush = foreground;
+        _terminalWindow.SetCursorColor(foreground);
         Brush background = (Brush?)BrushConverter.ConvertFromString(_settings.BackgroundColor)
             ?? new SolidColorBrush(Color.FromArgb(0xD9, 0x1E, 0x1E, 0x1E));
         _terminalWindow.ApplyAppearance(background, _settings.WindowOpacity);
@@ -170,6 +211,16 @@ public partial class MainWindow : Window
         PosY_TextBox.Text = _terminalWindow.Top.ToString(CultureInfo.CurrentCulture);
         Width_TextBox.Text = _terminalWindow.Width.ToString(CultureInfo.CurrentCulture);
         Height_TextBox.Text = _terminalWindow.Height.ToString(CultureInfo.CurrentCulture);
+    }
+
+    private void LockTerminalWindow()
+    {
+        FlushTerminalOutput(null, EventArgs.Empty);
+        _terminalWindow.DeactivateInput();
+        _terminalWindow.SetWindowLocked(true);
+        _coreMeterUtility.Lock();
+        _terminalWindow.RefreshCursorAfterWindowLock();
+        TerminalWindowUiUpdate();
     }
 
     private async Task RestartTerminalSessionAsync()
@@ -190,6 +241,11 @@ public partial class MainWindow : Window
             _terminalSession = session;
             _newlineString = session.InputNewLine;
 
+            if (session is IWorkingDirectoryTerminalSession workingDirectorySession)
+            {
+                workingDirectorySession.WorkingDirectory = _settings.WorkingDirectory;
+            }
+
             if (session is RedirectedProcessTerminalSession &&
                 !_fallbackNoticeShown)
             {
@@ -201,8 +257,7 @@ public partial class MainWindow : Window
 
             try
             {
-                await session.StartAsync(
-                    _settings.ProcessPath);
+                await session.StartAsync(_settings.ProcessPath);
             }
             catch (Exception exception)
             {
@@ -326,10 +381,7 @@ public partial class MainWindow : Window
 
     private void TrimRenderedOutput()
     {
-        TextRange fullRange = new(
-            _terminalWindow.TerminalData_TextBox.Document.ContentStart,
-            _terminalWindow.TerminalData_TextBox.Document.ContentEnd);
-        string renderedText = fullRange.Text;
+        string renderedText = _terminalWindow.TerminalData_TextBox.Text;
         if (renderedText.Length <= _settings.MaxOutputCharacters)
         {
             return;
@@ -339,8 +391,35 @@ public partial class MainWindow : Window
             0,
             _settings.MaxOutputCharacters - Environment.NewLine.Length);
         string tail = renderedText[^tailLength..];
-        _terminalWindow.TerminalData_TextBox.Document.Blocks.Clear();
-        _terminalWindow.TerminalData_TextBox.AppendText(tail);
+        _terminalWindow.TerminalData_TextBox.Text = tail;
+        _terminalWindow.TerminalData_TextBox.CaretIndex = tail.Length;
+    }
+
+    private void ClearRenderedOutput()
+    {
+        string? promptLine = FindLastPowerShellPromptLine(
+            _terminalWindow.TerminalData_TextBox.Text);
+
+        _outputBuffer.Clear();
+        _terminalWindow.TerminalData_TextBox.Clear();
+
+        if (promptLine is not null)
+        {
+            _terminalWindow.TerminalData_TextBox.Text = promptLine;
+            _terminalWindow.TerminalData_TextBox.CaretIndex = promptLine.Length;
+            _terminalWindow.TerminalData_TextBox.ScrollToEnd();
+        }
+    }
+
+    private static string? FindLastPowerShellPromptLine(string text)
+    {
+        MatchCollection matches = PowerShellPromptRegex.Matches(text);
+        if (matches.Count == 0)
+        {
+            return null;
+        }
+
+        return matches[^1].Groups[1].Value.TrimEnd();
     }
 
     private async Task SendCommandAsync(string command)
@@ -348,14 +427,18 @@ public partial class MainWindow : Window
         BuiltInCommandResult builtIn = BuiltInCommandParser.Parse(command);
         if (builtIn.Kind != BuiltInCommandKind.None)
         {
-            QueueOutput(command + Environment.NewLine);
-
-            if (builtIn.Kind == BuiltInCommandKind.SetNewline)
+            if (builtIn.Kind == BuiltInCommandKind.Clear)
             {
+                ClearRenderedOutput();
+            }
+            else if (builtIn.Kind == BuiltInCommandKind.SetNewline)
+            {
+                QueueOutput(command + Environment.NewLine);
                 _newlineString = builtIn.Newline ?? "\r";
             }
             else
             {
+                QueueOutput(command + Environment.NewLine);
                 QueueOutput((builtIn.Error ?? "Invalid Background Terminal command.") +
                     Environment.NewLine);
             }
@@ -474,14 +557,14 @@ public partial class MainWindow : Window
     {
         _terminalWindowLocked = !_terminalWindowLocked;
         TerminalWindowLocked_Button.Content = _terminalWindowLocked ? "Locked" : "Unlocked";
-        _terminalWindow.SetWindowLocked(_terminalWindowLocked);
 
         if (_terminalWindowLocked)
         {
-            _coreMeterUtility.Lock();
+            LockTerminalWindow();
         }
         else
         {
+            _terminalWindow.SetWindowLocked(false);
             _coreMeterUtility.Unlock();
         }
     }
@@ -544,6 +627,10 @@ public partial class MainWindow : Window
             _settings.ProcessPath,
             updatedSettings.ProcessPath,
             StringComparison.OrdinalIgnoreCase);
+        bool workingDirectoryChanged = !string.Equals(
+            _settings.WorkingDirectory,
+            updatedSettings.WorkingDirectory,
+            StringComparison.OrdinalIgnoreCase);
 
         try
         {
@@ -566,7 +653,7 @@ public partial class MainWindow : Window
         _regex = CreateRegex(_settings.RegexFilter);
         ApplySettingsToTerminalWindow();
 
-        if (processChanged)
+        if (processChanged || workingDirectoryChanged)
         {
             await RestartTerminalSessionAsync();
         }
@@ -587,6 +674,12 @@ public partial class MainWindow : Window
         if (processPath.Length == 0)
         {
             ShowValidationError("Process cannot be empty.");
+            return false;
+        }
+
+        string workingDirectory = WorkingDirectory_TextBox.Text.Trim();
+        if (!TryResolveWorkingDirectory(workingDirectory, out string? resolvedWorkingDirectory))
+        {
             return false;
         }
 
@@ -675,6 +768,7 @@ public partial class MainWindow : Window
         updatedSettings = new BackgroundTerminalSettings
         {
             ProcessPath = processPath,
+            WorkingDirectory = resolvedWorkingDirectory ?? string.Empty,
             Key1 = KeyInterop.VirtualKeyFromKey(_key1.Value),
             Key2 = KeyInterop.VirtualKeyFromKey(_key2.Value),
             FontSize = fontSize,
@@ -695,6 +789,40 @@ public partial class MainWindow : Window
                     trigger.NewlineString))
                 .ToList()
         };
+        return true;
+    }
+
+    private bool TryResolveWorkingDirectory(
+        string workingDirectory,
+        out string? resolvedWorkingDirectory)
+    {
+        resolvedWorkingDirectory = null;
+
+        if (workingDirectory.Length == 0)
+        {
+            return true;
+        }
+
+        string expanded = Environment.ExpandEnvironmentVariables(workingDirectory);
+        string fullPath;
+        try
+        {
+            fullPath = Path.GetFullPath(expanded);
+        }
+        catch (Exception exception) when (
+            exception is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            ShowValidationError("Working directory must be a valid folder path.");
+            return false;
+        }
+
+        if (!Directory.Exists(fullPath))
+        {
+            ShowValidationError("Working directory must exist.");
+            return false;
+        }
+
+        resolvedWorkingDirectory = fullPath;
         return true;
     }
 
@@ -769,7 +897,7 @@ public partial class MainWindow : Window
         Close();
     }
 
-    private async void MainWindow_Closing(object? sender, CancelEventArgs e)
+    private void MainWindow_Closing(object? sender, CancelEventArgs e)
     {
         if (_shutdownComplete)
         {
@@ -783,18 +911,7 @@ public partial class MainWindow : Window
         }
 
         _isClosing = true;
-        await _sessionLifecycle.WaitAsync();
-        try
-        {
-            await DisposeTerminalSessionAsync();
-        }
-        finally
-        {
-            _sessionLifecycle.Release();
-        }
-
-        _shutdownComplete = true;
-        Close();
+        _ = ShutdownAsync();
     }
 
     private void MainWindow_StateChanged(object sender, EventArgs e)
@@ -811,11 +928,41 @@ public partial class MainWindow : Window
 
     private void MainWindow_Closed(object sender, EventArgs e)
     {
-        _isClosing = true;
-        _outputTimer.Stop();
-        Win32Interop.DestroyKeyhook();
-        _terminalWindow.Close();
-        _sessionLifecycle.Dispose();
+    }
+
+    private async Task ShutdownAsync()
+    {
+        try
+        {
+            _outputTimer.Stop();
+            Win32Interop.DestroyKeyhook();
+
+            await _sessionLifecycle.WaitAsync();
+            try
+            {
+                await DisposeTerminalSessionAsync();
+            }
+            finally
+            {
+                _sessionLifecycle.Release();
+            }
+
+            await Dispatcher.InvokeAsync(() =>
+            {
+                if (_shutdownComplete)
+                {
+                    return;
+                }
+
+                _shutdownComplete = true;
+                _terminalWindow.Close();
+                Close();
+            });
+        }
+        finally
+        {
+            _sessionLifecycle.Dispose();
+        }
     }
 
     private void KeyTriggered(int keyCode)
@@ -837,6 +984,7 @@ public partial class MainWindow : Window
 
                 if (!_terminalWindowActive)
                 {
+                    _terminalWindow.ActivateInput();
                     Win32Interop.ClickSimulateFocus(_terminalWindow);
                     IntPtr terminalHandle = new WindowInteropHelper(_terminalWindow).Handle;
                     Win32Interop.SetForegroundWindow(terminalHandle);
@@ -849,8 +997,8 @@ public partial class MainWindow : Window
                 }
                 else
                 {
+                    _terminalWindow.DeactivateInput();
                     _terminalWindowActive = false;
-                    Keyboard.ClearFocus();
                 }
             }
         }

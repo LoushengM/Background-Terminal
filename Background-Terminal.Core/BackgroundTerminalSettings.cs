@@ -3,6 +3,7 @@ namespace Background_Terminal.Core;
 public sealed class BackgroundTerminalSettings
 {
     public string ProcessPath { get; set; } = "cmd.exe";
+    public string WorkingDirectory { get; set; } = string.Empty;
     public int Key1 { get; set; } = 162;
     public int Key2 { get; set; } = 66;
     public double FontSize { get; set; } = 12;

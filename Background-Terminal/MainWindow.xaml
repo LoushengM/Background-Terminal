@@ -7,7 +7,7 @@
     xmlns:tb="http://www.hardcodet.net/taskbar"
     Title="Background Terminal"
     Width="400"
-    Height="540"
+    Height="570"
     AllowsTransparency="True"
     Background="Transparent"
     Closed="MainWindow_Closed"
@@ -17,6 +17,8 @@
     ResizeMode="NoResize"
     ShowInTaskbar="False"
     StateChanged="MainWindow_StateChanged"
+    SnapsToDevicePixels="True"
+    UseLayoutRounding="True"
     WindowStyle="None"
     mc:Ignorable="d">
     <Window.Resources>
@@ -174,27 +176,36 @@
             </Button>
         </Grid>
 
-        <Grid Grid.Row="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="30" />
-                <RowDefinition Height="10" />
-                <RowDefinition Height="30" />
-                <RowDefinition Height="30" />
-                <RowDefinition Height="30" />
-                <RowDefinition Height="30" />
-                <RowDefinition Height="30" />
-                <RowDefinition Height="30" />
-                <RowDefinition Height="30" />
-                <RowDefinition Height="10" />
-                <RowDefinition Height="30" />
-                <RowDefinition Height="30" />
-                <RowDefinition Height="30" />
-                <RowDefinition Height="10" />
-                <RowDefinition Height="100" />
-                <RowDefinition Height="30" />
-            </Grid.RowDefinitions>
-            <Border Grid.RowSpan="15" Background="#F5F5F5" />
-            <Grid Grid.Row="0">
+        <ScrollViewer
+            Grid.Row="1"
+            HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto"
+            CanContentScroll="False">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="60" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="100" />
+                    <RowDefinition Height="30" />
+                </Grid.RowDefinitions>
+                <Border Grid.RowSpan="15" Background="#F5F5F5" />
+                <Grid Grid.Row="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="30" />
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1*" />
                     <ColumnDefinition Width="1*" />
@@ -207,6 +218,19 @@
                     FontFamily="Yu Gothic UI Light" />
                 <TextBox
                     x:Name="Process_TextBox"
+                    Grid.Column="1"
+                    Margin="10,5,10,5"
+                    VerticalContentAlignment="Center" />
+                <Label
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    HorizontalContentAlignment="Center"
+                    Content="Working Directory:"
+                    FontFamily="Yu Gothic UI Light" />
+                <TextBox
+                    x:Name="WorkingDirectory_TextBox"
+                    Grid.Row="1"
                     Grid.Column="1"
                     Margin="10,5,10,5"
                     VerticalContentAlignment="Center" />
@@ -562,43 +586,44 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
             </Grid>
-            <Grid Grid.Row="15">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1*" />
-                    <ColumnDefinition Width="1" />
-                    <ColumnDefinition Width="1*" />
-                </Grid.ColumnDefinitions>
-                <Border
-                    Grid.Column="0"
-                    Grid.ColumnSpan="3"
-                    Background="LightGray"
-                    CornerRadius="0, 0, 4, 4" />
+                <Grid Grid.Row="15">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1" />
+                        <ColumnDefinition Width="1*" />
+                    </Grid.ColumnDefinitions>
+                    <Border
+                        Grid.Column="0"
+                        Grid.ColumnSpan="3"
+                        Background="LightGray"
+                        CornerRadius="0, 0, 4, 4" />
 
-                <Button
-                    Grid.Column="0"
-                    Margin="0,0,0,0"
-                    Click="ApplyChangesButton_Click"
-                    Content="Apply Changes"
-                    FontFamily="Yu Gothic UI Light"
-                    FontSize="10"
-                    Style="{StaticResource PrimaryButtonLeft}" />
+                    <Button
+                        Grid.Column="0"
+                        Margin="0,0,0,0"
+                        Click="ApplyChangesButton_Click"
+                        Content="Apply Changes"
+                        FontFamily="Yu Gothic UI Light"
+                        FontSize="10"
+                        Style="{StaticResource PrimaryButtonLeft}" />
 
-                <Border
-                    Grid.Column="1"
-                    Width="0.5"
-                    Margin="0,4"
-                    BorderBrush="Black"
-                    BorderThickness="0.5" />
+                    <Border
+                        Grid.Column="1"
+                        Width="0.5"
+                        Margin="0,4"
+                        BorderBrush="Black"
+                        BorderThickness="0.5" />
 
-                <Button
-                    Grid.Column="2"
-                    Margin="0,0,0,0"
-                    Click="MinimizeButton_Click"
-                    Content="Hide This Window"
-                    FontFamily="Yu Gothic UI Light"
-                    FontSize="10"
-                    Style="{StaticResource PrimaryButtonRight}" />
+                    <Button
+                        Grid.Column="2"
+                        Margin="0,0,0,0"
+                        Click="MinimizeButton_Click"
+                        Content="Hide This Window"
+                        FontFamily="Yu Gothic UI Light"
+                        FontSize="10"
+                        Style="{StaticResource PrimaryButtonRight}" />
+                </Grid>
             </Grid>
-        </Grid>
+        </ScrollViewer>
     </Grid>
 </Window>

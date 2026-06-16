@@ -29,7 +29,7 @@ jobs:
         shell: pwsh
         run: |
           dotnet restore Background-Terminal.Core/Background-Terminal.Core.csproj
-          dotnet restore Background-Terminal/Background-Terminal.csproj
+          dotnet restore Background-Terminal/Background-Terminal.csproj --runtime win-x64
           dotnet restore Background-Terminal.Core.Tests/Background-Terminal.Core.Tests.csproj
           dotnet restore Background-Terminal.IntegrationTests/Background-Terminal.IntegrationTests.csproj
 
@@ -44,3 +44,26 @@ jobs:
         run: |
           dotnet test Background-Terminal.Core.Tests/Background-Terminal.Core.Tests.csproj --configuration Release --no-restore
           dotnet test Background-Terminal.IntegrationTests/Background-Terminal.IntegrationTests.csproj --configuration Release --no-restore --property:Platform=x64
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $wixPath = $null
+          $localWixPath = 'C:\Program Files (x86)\WiX Toolset v3.11\bin'
+
+          if ((Test-Path -LiteralPath (Join-Path $localWixPath 'candle.exe')) -and (Test-Path -LiteralPath (Join-Path $localWixPath 'light.exe'))) {
+            $wixPath = $localWixPath
+          } else {
+            $candle = Get-Command candle.exe -ErrorAction SilentlyContinue
+            $light = Get-Command light.exe -ErrorAction SilentlyContinue
+
+            if ($candle -and $light -and ((Split-Path -Parent $candle.Source) -eq (Split-Path -Parent $light.Source))) {
+              $wixPath = Split-Path -Parent $candle.Source
+            }
+          }
+
+          if ($wixPath) {
+            & .\Background-Terminal-Setup\BuildMsi.ps1 -NoRestore -WixPath $wixPath
+          } else {
+            Write-Host 'Skipping MSI packaging because WiX v3.11 candle.exe and light.exe were not found.'
+          }

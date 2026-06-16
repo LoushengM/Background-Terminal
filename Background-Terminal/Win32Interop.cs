@@ -154,9 +154,13 @@ namespace Background_Terminal
 
         #region Win32 Alt+Tab Hide
         [DllImport("user32.dll", SetLastError = true)]
-        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-        [DllImport("user32.dll")]
-        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+        private static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
+        [DllImport("user32.dll", EntryPoint = "GetWindowLong", SetLastError = true)]
+        private static extern IntPtr GetWindowLong32(IntPtr hWnd, int nIndex);
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr", SetLastError = true)]
+        private static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+        [DllImport("user32.dll", EntryPoint = "SetWindowLong", SetLastError = true)]
+        private static extern IntPtr SetWindowLong32(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
 
         private const int GWL_EX_STYLE = -20;
         private const int WS_EX_APPWINDOW = 0x00040000;
@@ -164,7 +168,30 @@ namespace Background_Terminal
 
         public static void HideWindowFromAltTabMenu(IntPtr hWnd)
         {
-            SetWindowLong(hWnd, GWL_EX_STYLE, (GetWindowLong(hWnd, GWL_EX_STYLE) | WS_EX_TOOLWINDOW) & ~WS_EX_APPWINDOW);
+            IntPtr exStyle = GetWindowLongPtrSafe(hWnd, GWL_EX_STYLE);
+            IntPtr newStyle = new((exStyle.ToInt64() | WS_EX_TOOLWINDOW) & ~WS_EX_APPWINDOW);
+            IntPtr result = SetWindowLongPtrSafe(hWnd, GWL_EX_STYLE, newStyle);
+            if (result == IntPtr.Zero && Marshal.GetLastPInvokeError() != 0)
+            {
+                throw new Win32Exception(
+                    Marshal.GetLastPInvokeError(),
+                    "Unable to hide the terminal window from the Alt+Tab menu.");
+            }
+        }
+
+        private static IntPtr GetWindowLongPtrSafe(IntPtr hWnd, int nIndex)
+        {
+            return IntPtr.Size == 8
+                ? GetWindowLongPtr(hWnd, nIndex)
+                : GetWindowLong32(hWnd, nIndex);
+        }
+
+        private static IntPtr SetWindowLongPtrSafe(IntPtr hWnd, int nIndex, IntPtr dwNewLong)
+        {
+            Marshal.SetLastPInvokeError(0);
+            return IntPtr.Size == 8
+                ? SetWindowLongPtr(hWnd, nIndex, dwNewLong)
+                : SetWindowLong32(hWnd, nIndex, dwNewLong);
         }
         #endregion
     }
