@@ -105,6 +105,7 @@ namespace Background_Terminal
                     await existing.Finished.Task.ConfigureAwait(false);
                 }
 
+                ThrowIfDisposed();
                 cancellationToken.ThrowIfCancellationRequested();
 
                 SessionState session;
@@ -123,6 +124,12 @@ namespace Background_Terminal
                     throw new PlatformNotSupportedException(
                         "Windows ConPTY requires Windows 10 version 1809 or later.",
                         exception);
+                }
+
+                if (Volatile.Read(ref _disposeRequested) != 0)
+                {
+                    await AbandonUnstartedSessionAsync(session).ConfigureAwait(false);
+                    throw new ObjectDisposedException(nameof(ConPtyTerminalSession));
                 }
 
                 lock (_syncRoot)
@@ -175,6 +182,8 @@ namespace Background_Terminal
             await _writeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
+                ThrowIfDisposed();
+
                 SessionState session = GetRunningSession();
                 byte[] bytes = Encoding.UTF8.GetBytes(text);
 
@@ -642,6 +651,32 @@ namespace Background_Terminal
             catch (TimeoutException)
             {
                 return false;
+            }
+        }
+
+        private static async Task AbandonUnstartedSessionAsync(SessionState session)
+        {
+            try
+            {
+                session.CloseInput();
+                Task closePseudoConsole = session.ClosePseudoConsoleAsync();
+
+                try
+                {
+                    TryTerminateProcess(session, 1);
+                }
+                catch (Win32Exception)
+                {
+                    // Preserve the disposed result while still releasing handles.
+                }
+
+                session.CloseOutput();
+                await CompletesWithinAsync(closePseudoConsole, CleanupTimeout).ConfigureAwait(false);
+            }
+            finally
+            {
+                session.ProcessHandle.Dispose();
+                session.Finished.TrySetResult(true);
             }
         }
 

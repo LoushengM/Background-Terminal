@@ -49,7 +49,7 @@ public sealed class SettingsService
         {
             string json = File.ReadAllText(ConfigPath);
             BackgroundTerminalSettings settings =
-                JsonSerializer.Deserialize<BackgroundTerminalSettings>(json)
+                JsonSerializer.Deserialize<BackgroundTerminalSettings>(json, JsonOptions)
                 ?? throw new JsonException("The settings document was empty.");
 
             Normalize(settings);
@@ -177,6 +177,8 @@ public sealed class SettingsService
             settings.RegexFilter = string.Empty;
         }
 
+        settings.NewlineTriggers.RemoveAll(trigger => trigger is null);
+
         foreach (NewlineTrigger trigger in settings.NewlineTriggers)
         {
             trigger.TriggerCommand ??= string.Empty;
@@ -196,7 +198,7 @@ public sealed class SettingsService
         try
         {
             string backupPath =
-                $"{ConfigPath}.corrupt-{DateTime.UtcNow:yyyyMMddHHmmssfff}";
+                $"{ConfigPath}.corrupt-{DateTime.UtcNow:yyyyMMddHHmmssfff}-{Guid.NewGuid():N}";
             File.Move(ConfigPath, backupPath, true);
             return backupPath;
         }

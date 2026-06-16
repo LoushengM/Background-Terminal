@@ -229,6 +229,7 @@ public partial class MainWindow : Window
         try
         {
             await DisposeTerminalSessionAsync();
+            _terminalTextFilter.Reset();
 
             if (_isClosing)
             {
@@ -282,9 +283,7 @@ public partial class MainWindow : Window
                     $"Unable to start '{_settings.ProcessPath}': {exception.Message}" +
                     Environment.NewLine);
 
-                Show();
-                WindowState = WindowState.Normal;
-                Topmost = true;
+                RestoreMainWindow();
                 MessageBox.Show(
                     this,
                     "There was an error starting the terminal process. Check the Process " +
@@ -543,9 +542,7 @@ public partial class MainWindow : Window
     {
         if (WindowState == WindowState.Minimized)
         {
-            Show();
-            WindowState = WindowState.Normal;
-            Topmost = true;
+            RestoreMainWindow();
         }
         else
         {
@@ -930,12 +927,34 @@ public partial class MainWindow : Window
     {
     }
 
+    private void RestoreMainWindow()
+    {
+        if (!IsVisible)
+        {
+            Show();
+        }
+
+        if (WindowState == WindowState.Minimized)
+        {
+            WindowState = WindowState.Normal;
+        }
+
+        Activate();
+        Focus();
+    }
+
     private async Task ShutdownAsync()
     {
         try
         {
             _outputTimer.Stop();
-            Win32Interop.DestroyKeyhook();
+            if (!Win32Interop.DestroyKeyhook(out Win32Exception? hookException) &&
+                hookException is not null)
+            {
+                QueueOutput(
+                    $"Unable to uninstall the global keyboard hook: " +
+                    $"{hookException.Message}{Environment.NewLine}");
+            }
 
             await _sessionLifecycle.WaitAsync();
             try
@@ -988,10 +1007,6 @@ public partial class MainWindow : Window
                     Win32Interop.ClickSimulateFocus(_terminalWindow);
                     IntPtr terminalHandle = new WindowInteropHelper(_terminalWindow).Handle;
                     Win32Interop.SetForegroundWindow(terminalHandle);
-                    Win32Interop.SetActiveWindow(terminalHandle);
-                    FocusManager.SetFocusedElement(
-                        _terminalWindow,
-                        _terminalWindow.Input_TextBox);
                     Keyboard.Focus(_terminalWindow.Input_TextBox);
                     _terminalWindowActive = true;
                 }

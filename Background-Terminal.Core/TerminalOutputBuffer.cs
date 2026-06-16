@@ -32,7 +32,7 @@ public sealed class TerminalOutputBuffer
             if (text.Length >= MaxPendingCharacters)
             {
                 _chunks.Clear();
-                string tail = text[^MaxPendingCharacters..];
+                string tail = GetSafeTail(text, MaxPendingCharacters);
                 _chunks.Enqueue(tail);
                 _characterCount = tail.Length;
                 return;
@@ -58,8 +58,9 @@ public sealed class TerminalOutputBuffer
                     continue;
                 }
 
-                retained.Add(oldest[overage..]);
-                _characterCount -= overage;
+                int safeStart = GetSafeStartIndex(oldest, overage);
+                retained.Add(oldest[safeStart..]);
+                _characterCount -= safeStart;
                 overage = 0;
                 break;
             }
@@ -75,6 +76,26 @@ public sealed class TerminalOutputBuffer
                 _chunks.Enqueue(chunk);
             }
         }
+    }
+
+    private static string GetSafeTail(string value, int maxLength)
+    {
+        int startIndex = Math.Max(0, value.Length - maxLength);
+        startIndex = GetSafeStartIndex(value, startIndex);
+        return value[startIndex..];
+    }
+
+    private static int GetSafeStartIndex(string value, int startIndex)
+    {
+        if (startIndex > 0 &&
+            startIndex < value.Length &&
+            char.IsLowSurrogate(value[startIndex]) &&
+            char.IsHighSurrogate(value[startIndex - 1]))
+        {
+            return startIndex + 1;
+        }
+
+        return startIndex;
     }
 
     public string Drain()

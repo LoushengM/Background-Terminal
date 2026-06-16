@@ -88,11 +88,98 @@ public sealed class TerminalSessionCleanupTests
         Assert.IsFalse(session.IsRunning);
     }
 
+    [TestMethod]
+    [Timeout(20_000)]
+    public async Task RedirectedStopWithBackgroundDescendant_AllowsFollowupStartToObserveDispose()
+    {
+        await using RedirectedProcessTerminalSession session = new();
+
+        await session.StartAsync(CreateBackgroundHoldOpenCommand());
+        ValueTask disposeTask = session.DisposeAsync();
+        await Task.Delay(100);
+
+        Task followupStart = session.StartAsync("cmd.exe /d /q /c exit 0");
+
+        await AssertThrowsAsync<ObjectDisposedException>(async () =>
+            await followupStart.WaitAsync(TimeSpan.FromSeconds(10)));
+
+        await disposeTask.AsTask().WaitAsync(TimeSpan.FromSeconds(10));
+    }
+
+    [TestMethod]
+    [Timeout(10_000)]
+    public async Task RedirectedWriteAfterDispose_ThrowsObjectDisposedException()
+    {
+        await using RedirectedProcessTerminalSession session = new();
+
+        await session.DisposeAsync();
+
+        await AssertThrowsAsync<ObjectDisposedException>(async () =>
+            await session.WriteAsync("echo ignored" + session.InputNewLine)
+                .WaitAsync(TimeSpan.FromSeconds(5)));
+    }
+
+    [TestMethod]
+    [Timeout(20_000)]
+    public async Task ConPtyStopWithBackgroundDescendant_AllowsFollowupStartToObserveDispose()
+    {
+        AssumeConPtyAvailable();
+
+        await using ConPtyTerminalSession session = new();
+
+        await session.StartAsync(CreateBackgroundHoldOpenCommand());
+        ValueTask disposeTask = session.DisposeAsync();
+        await Task.Delay(100);
+
+        Task followupStart = session.StartAsync("cmd.exe /d /q /c exit 0");
+
+        await AssertThrowsAsync<ObjectDisposedException>(async () =>
+            await followupStart.WaitAsync(TimeSpan.FromSeconds(10)));
+
+        await disposeTask.AsTask().WaitAsync(TimeSpan.FromSeconds(10));
+    }
+
+    [TestMethod]
+    [Timeout(10_000)]
+    public async Task ConPtyWriteAfterDispose_ThrowsObjectDisposedException()
+    {
+        AssumeConPtyAvailable();
+
+        await using ConPtyTerminalSession session = new();
+
+        await session.DisposeAsync();
+
+        await AssertThrowsAsync<ObjectDisposedException>(async () =>
+            await session.WriteAsync("echo ignored" + session.InputNewLine)
+                .WaitAsync(TimeSpan.FromSeconds(5)));
+    }
+
     private static void AssumeConPtyAvailable()
     {
         if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 17763))
         {
             Assert.Inconclusive("Windows ConPTY is not available on this system.");
         }
+    }
+
+    private static string CreateBackgroundHoldOpenCommand()
+    {
+        return
+            "cmd.exe /d /q /c start \"\" /b cmd.exe /d /q /c timeout /t 30 /nobreak >nul";
+    }
+
+    private static async Task AssertThrowsAsync<TException>(Func<Task> action)
+        where TException : Exception
+    {
+        try
+        {
+            await action();
+        }
+        catch (TException)
+        {
+            return;
+        }
+
+        Assert.Fail($"Expected {typeof(TException).Name}.");
     }
 }

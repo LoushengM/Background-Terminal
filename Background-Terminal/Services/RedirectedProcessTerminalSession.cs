@@ -13,6 +13,7 @@ public sealed class RedirectedProcessTerminalSession :
     ITerminalSession,
     IWorkingDirectoryTerminalSession
 {
+    private static readonly TimeSpan CleanupTimeout = TimeSpan.FromSeconds(5);
     private readonly SemaphoreSlim _lifecycleGate = new(1, 1);
     private readonly SemaphoreSlim _writeGate = new(1, 1);
     private Process? _process;
@@ -38,6 +39,8 @@ public sealed class RedirectedProcessTerminalSession :
         await _lifecycleGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            ObjectDisposedException.ThrowIf(_disposed != 0, this);
+
             if (_process is not null)
             {
                 throw new InvalidOperationException("A terminal session is already running.");
@@ -90,6 +93,8 @@ public sealed class RedirectedProcessTerminalSession :
         await _writeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            ObjectDisposedException.ThrowIf(_disposed != 0, this);
+
             Process process = GetRunningProcess();
             await process.StandardInput.WriteAsync(text.AsMemory(), cancellationToken)
                 .ConfigureAwait(false);
@@ -164,7 +169,32 @@ public sealed class RedirectedProcessTerminalSession :
 
             if (_monitorTask is not null)
             {
-                await _monitorTask.ConfigureAwait(false);
+                try
+                {
+                    await _monitorTask.WaitAsync(CleanupTimeout).ConfigureAwait(false);
+                }
+                catch (TimeoutException)
+                {
+                    CloseRedirectedStreams(process);
+
+                    try
+                    {
+                        await _monitorTask.WaitAsync(CleanupTimeout).ConfigureAwait(false);
+                    }
+                    catch (TimeoutException)
+                    {
+                    }
+
+                    if (process.HasExited)
+                    {
+                        if (ReferenceEquals(
+                            Interlocked.CompareExchange(ref _process, null, process),
+                            process))
+                        {
+                            process.Dispose();
+                        }
+                    }
+                }
             }
         }
         finally
@@ -191,7 +221,6 @@ public sealed class RedirectedProcessTerminalSession :
         Task standardError = PumpAsync(process.StandardError);
 
         await process.WaitForExitAsync().ConfigureAwait(false);
-        await Task.WhenAll(standardOutput, standardError).ConfigureAwait(false);
         int exitCode = process.ExitCode;
 
         if (ReferenceEquals(Interlocked.CompareExchange(ref _process, null, process), process))
@@ -200,20 +229,34 @@ public sealed class RedirectedProcessTerminalSession :
         }
 
         RaiseExited(exitCode);
+
+        await Task.WhenAll(standardOutput, standardError).ConfigureAwait(false);
+
     }
 
     private async Task PumpAsync(StreamReader reader)
     {
-        char[] buffer = new char[4096];
-        while (true)
+        try
         {
-            int count = await reader.ReadAsync(buffer.AsMemory()).ConfigureAwait(false);
-            if (count == 0)
+            char[] buffer = new char[4096];
+            while (true)
             {
-                return;
-            }
+                int count = await reader.ReadAsync(buffer.AsMemory()).ConfigureAwait(false);
+                if (count == 0)
+                {
+                    return;
+                }
 
-            RaiseOutput(new string(buffer, 0, count));
+                RaiseOutput(new string(buffer, 0, count));
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+            // The process handle can be closed while a pump is still draining.
+        }
+        catch (IOException)
+        {
+            // Shutdown can close redirected streams to avoid waiting forever.
         }
     }
 
@@ -254,6 +297,36 @@ public sealed class RedirectedProcessTerminalSession :
             catch
             {
             }
+        }
+    }
+
+    private static void CloseRedirectedStreams(Process process)
+    {
+        try
+        {
+            process.StandardInput.Dispose();
+        }
+        catch (Exception exception) when (
+            exception is InvalidOperationException or ObjectDisposedException)
+        {
+        }
+
+        try
+        {
+            process.StandardOutput.Dispose();
+        }
+        catch (Exception exception) when (
+            exception is InvalidOperationException or ObjectDisposedException)
+        {
+        }
+
+        try
+        {
+            process.StandardError.Dispose();
+        }
+        catch (Exception exception) when (
+            exception is InvalidOperationException or ObjectDisposedException)
+        {
         }
     }
 

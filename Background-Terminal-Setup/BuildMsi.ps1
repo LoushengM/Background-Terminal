@@ -104,6 +104,29 @@ function Escape-WixAttribute {
   return [System.Security.SecurityElement]::Escape($Value)
 }
 
+function Get-AppProjectVersion {
+  param(
+    [string]$ProjectPath
+  )
+
+  [xml]$projectXml = Get-Content -LiteralPath $ProjectPath -Raw
+  $versionNode = $projectXml.Project.PropertyGroup.Version
+  if (-not $versionNode) {
+    $versionNode = $projectXml.Project.PropertyGroup.VersionPrefix
+  }
+
+  if (-not $versionNode) {
+    throw "Could not determine app version from '$ProjectPath'."
+  }
+
+  $version = [string]$versionNode
+  if ($version -match '^\d+\.\d+\.\d+$') {
+    return "$version.0"
+  }
+
+  return $version
+}
+
 $repoRoot = Resolve-RepoRoot
 $setupDir = $PSScriptRoot
 $appProject = Join-Path $repoRoot 'Background-Terminal\Background-Terminal.csproj'
@@ -111,8 +134,7 @@ $appPublishDir = Join-Path $repoRoot "Background-Terminal\bin\$Configuration\net
 $harvestPath = Join-Path $setupDir 'HarvestedFiles.wxs'
 $objDir = Join-Path $setupDir "obj\$Configuration"
 $msiPath = Join-Path $setupDir 'Background_Terminal_Setup.msi'
-
-$env:NUGET_SIGNATURE_VERIFICATION = 'false'
+$productVersion = Get-AppProjectVersion -ProjectPath $appProject
 
 Write-Host "Publishing $RuntimeIdentifier $Configuration output to $appPublishDir"
 if (Test-Path -LiteralPath $appPublishDir) {
@@ -188,7 +210,7 @@ $candleOut = $objDir + '\'
 $candleArgs = @(
   '-nologo'
   '-arch', 'x64'
-  '-dPlatform=x64'
+  "-dProductVersion=$productVersion"
   "-dBuildSourceDir=$appPublishDir"
   '-out', $candleOut
   (Join-Path $setupDir 'Product.wxs')

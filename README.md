@@ -36,7 +36,7 @@ If WiX v3.11 lives in a local bin directory instead of `PATH`, point the script 
 pwsh -ExecutionPolicy Bypass -File .\Background-Terminal-Setup\BuildMsi.ps1 -NoRestore -WixPath "C:\Program Files (x86)\WiX Toolset v3.11\bin"
 ```
 
-The script publishes `Background-Terminal` for `win-x64`, regenerates `Background-Terminal-Setup\HarvestedFiles.wxs` from the publish output without `.pdb` files, and builds `Background-Terminal-Setup\Background_Terminal_Setup.msi` with WiX v3.11 `candle.exe` and `light.exe`.
+The script publishes `Background-Terminal` for `win-x64`, reads the app project version from `Background-Terminal\Background-Terminal.csproj` for the MSI product version, regenerates `Background-Terminal-Setup\HarvestedFiles.wxs` from the publish output without `.pdb` files, and builds `Background-Terminal-Setup\Background_Terminal_Setup.msi` with WiX v3.11 `candle.exe` and `light.exe`.
 
 If `light.exe` cannot run ICE validation because the Windows Installer service is unavailable in the build environment, rerun the script with `-SuppressValidation`.
 

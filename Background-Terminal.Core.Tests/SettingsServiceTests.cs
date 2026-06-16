@@ -50,6 +50,51 @@ public sealed class SettingsServiceTests
     }
 
     [TestMethod]
+    public void Load_UsesSerializerOptionsForCaseInsensitiveProperties()
+    {
+        using TempDirectory temp = new();
+        string configPath = Path.Combine(temp.Path, "settings.json");
+        File.WriteAllText(
+            configPath,
+            """{"processpath":"pwsh.exe","fontsize":15}""");
+        SettingsService service = new(configPath);
+
+        SettingsLoadResult result = service.Load();
+
+        Assert.IsNull(result.RecoveryMessage);
+        Assert.AreEqual("pwsh.exe", result.Settings.ProcessPath);
+        Assert.AreEqual(15, result.Settings.FontSize);
+    }
+
+    [TestMethod]
+    public void Load_RepeatedInvalidConfigs_KeepDistinctBackups()
+    {
+        using TempDirectory temp = new();
+        string configPath = Path.Combine(temp.Path, "settings.json");
+        const string malformedJson = "{ definitely not json";
+        SettingsService service = new(configPath);
+
+        File.WriteAllText(configPath, malformedJson);
+        service.Load();
+
+        File.WriteAllText(configPath, malformedJson);
+        service.Load();
+
+        string[] backups =
+            Directory.GetFiles(temp.Path, "settings.json.corrupt-*");
+        Assert.AreEqual(2, backups.Length);
+        Assert.AreEqual(
+            malformedJson,
+            File.ReadAllText(backups[0]));
+        Assert.AreEqual(
+            malformedJson,
+            File.ReadAllText(backups[1]));
+        Assert.AreNotEqual(
+            Path.GetFileName(backups[0]),
+            Path.GetFileName(backups[1]));
+    }
+
+    [TestMethod]
     public void Load_ReadFailure_ReturnsDefaultsWithoutReplacingConfig()
     {
         using TempDirectory temp = new();
@@ -201,6 +246,31 @@ public sealed class SettingsServiceTests
         Assert.AreEqual(
             Environment.NewLine,
             settings.NewlineTriggers[0].NewlineString);
+    }
+
+    [TestMethod]
+    public void Normalize_LeavesNullNewlineTriggerEntriesOut()
+    {
+        BackgroundTerminalSettings settings = new()
+        {
+            NewlineTriggers =
+            [
+                null!,
+                new NewlineTrigger
+                {
+                    TriggerCommand = "  run  ",
+                    ExitCommand = null!,
+                    NewlineString = null!
+                }
+            ]
+        };
+
+        SettingsService.Normalize(settings);
+
+        Assert.HasCount(1, settings.NewlineTriggers);
+        Assert.AreEqual("  run  ", settings.NewlineTriggers[0].TriggerCommand);
+        Assert.AreEqual(string.Empty, settings.NewlineTriggers[0].ExitCommand);
+        Assert.AreEqual(Environment.NewLine, settings.NewlineTriggers[0].NewlineString);
     }
 
     private static void AssertDefaultSettings(

@@ -121,7 +121,7 @@ public partial class TerminalWindow : Window
             }
 
             Input_TextBox.Focusable = true;
-            FocusManager.SetFocusedElement(this, Input_TextBox);
+            Input_TextBox.Focus();
             Keyboard.Focus(Input_TextBox);
             _cursorAdorner?.Activate();
         });
@@ -321,6 +321,7 @@ public partial class TerminalWindow : Window
         }
 
         ActivateInput();
+        Input_TextBox.Focus();
         Keyboard.Focus(Input_TextBox);
     }
 

@@ -47,6 +47,19 @@ public sealed class TerminalOutputBufferTests
     }
 
     [TestMethod]
+    public void Append_TrimsWithoutSplittingSurrogatePairs()
+    {
+        TerminalOutputBuffer buffer = new(2);
+        string smilingFace = char.ConvertFromUtf32(0x1F642);
+
+        buffer.Append($"{smilingFace}x");
+
+        string drained = buffer.Drain();
+
+        Assert.AreEqual("x", drained);
+    }
+
+    [TestMethod]
     public void Drain_ReturnsPendingChunksAndClearsTheBuffer()
     {
         TerminalOutputBuffer buffer = new(20);

@@ -44,6 +44,9 @@ bld/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
+Background-Terminal-Setup/*.wixobj
+Background-Terminal-Setup/*.wixpdb
+Background-Terminal-Setup/*.msi
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/

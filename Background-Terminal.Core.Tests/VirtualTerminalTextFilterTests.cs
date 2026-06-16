@@ -26,4 +26,30 @@ public sealed class VirtualTerminalTextFilterTests
         Assert.AreEqual(string.Empty, filter.Filter("\u001b]0;split"));
         Assert.AreEqual("done", filter.Filter("\u001b\\done"));
     }
+
+    [TestMethod]
+    public void Filter_RemovesDcsApcPmAndSosStrings()
+    {
+        VirtualTerminalTextFilter filter = new();
+
+        Assert.AreEqual("left", filter.Filter("left\u001bP"));
+        Assert.AreEqual(string.Empty, filter.Filter("ignored"));
+        Assert.AreEqual("right", filter.Filter("\u001b\\right"));
+        filter.Reset();
+        Assert.AreEqual("keep", filter.Filter("keep\u001b_ignored\u001b\\"));
+        filter.Reset();
+        Assert.AreEqual("keep", filter.Filter("keep\u001b^ignored\u001b\\"));
+        filter.Reset();
+        Assert.AreEqual("keep", filter.Filter("keep\u001bXignored\u001b\\"));
+    }
+
+    [TestMethod]
+    public void Reset_ClearsPartialEscapeState()
+    {
+        VirtualTerminalTextFilter filter = new();
+
+        Assert.AreEqual("before", filter.Filter("before\u001b]0;title"));
+        filter.Reset();
+        Assert.AreEqual("after", filter.Filter("after"));
+    }
 }

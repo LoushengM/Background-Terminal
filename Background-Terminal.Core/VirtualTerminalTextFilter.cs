@@ -35,6 +35,10 @@ public sealed class VirtualTerminalTextFilter
                     {
                         '[' => FilterState.ControlSequence,
                         ']' => FilterState.OperatingSystemCommand,
+                        'P' => FilterState.StringEscape,
+                        '_' => FilterState.StringEscape,
+                        '^' => FilterState.StringEscape,
+                        'X' => FilterState.StringEscape,
                         _ => FilterState.Text
                     };
                     break;
@@ -62,10 +66,28 @@ public sealed class VirtualTerminalTextFilter
                         ? FilterState.Text
                         : FilterState.OperatingSystemCommand;
                     break;
+
+                case FilterState.StringEscape:
+                    if (character == '\u001b')
+                    {
+                        _state = FilterState.StringEscapeEscape;
+                    }
+                    break;
+
+                case FilterState.StringEscapeEscape:
+                    _state = character == '\\'
+                        ? FilterState.Text
+                        : FilterState.StringEscape;
+                    break;
             }
         }
 
         return output.ToString();
+    }
+
+    public void Reset()
+    {
+        _state = FilterState.Text;
     }
 
     private enum FilterState
@@ -74,6 +96,8 @@ public sealed class VirtualTerminalTextFilter
         Escape,
         ControlSequence,
         OperatingSystemCommand,
-        OperatingSystemCommandEscape
+        OperatingSystemCommandEscape,
+        StringEscape,
+        StringEscapeEscape
     }
 }
