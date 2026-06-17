@@ -228,6 +228,11 @@ public partial class MainWindow : Window
 
     private void SetTerminalWindowBounds()
     {
+        if (_terminalWindow.WindowState != WindowState.Normal)
+        {
+            _terminalWindow.WindowState = WindowState.Normal;
+        }
+
         _terminalWindow.Left = _settings.PosX;
         _terminalWindow.Top = _settings.PosY;
         _terminalWindow.Width = _settings.Width;
