@@ -32,7 +32,7 @@ public partial class MainWindow : Window
 
     private readonly SettingsService _settingsService;
     private TerminalWindow _terminalWindow;
-    private CoreMeterUtility _coreMeterUtility;
+    private CoreMeterUtility? _coreMeterUtility;
     private readonly TerminalOutputBuffer _outputBuffer;
     private readonly VirtualTerminalTextFilter _terminalTextFilter = new();
     private readonly DispatcherTimer _outputTimer;
@@ -199,6 +199,35 @@ public partial class MainWindow : Window
         Brush background = (Brush?)BrushConverter.ConvertFromString(_settings.BackgroundColor)
             ?? new SolidColorBrush(Color.FromArgb(0xD9, 0x1E, 0x1E, 0x1E));
         _terminalWindow.ApplyAppearance(background, _settings.WindowOpacity);
+        ApplyTerminalWindowBounds();
+    }
+
+    private void ApplyTerminalWindowBounds()
+    {
+        CoreMeterUtility? coreMeterUtility = _coreMeterUtility;
+        if (_terminalWindowLocked && coreMeterUtility is not null)
+        {
+            coreMeterUtility.Unlock();
+
+            try
+            {
+                SetTerminalWindowBounds();
+            }
+            finally
+            {
+                coreMeterUtility.Lock();
+            }
+        }
+        else
+        {
+            SetTerminalWindowBounds();
+        }
+
+        TerminalWindowUiUpdate();
+    }
+
+    private void SetTerminalWindowBounds()
+    {
         _terminalWindow.Left = _settings.PosX;
         _terminalWindow.Top = _settings.PosY;
         _terminalWindow.Width = _settings.Width;
@@ -218,7 +247,7 @@ public partial class MainWindow : Window
         FlushTerminalOutput(null, EventArgs.Empty);
         _terminalWindow.DeactivateInput();
         _terminalWindow.SetWindowLocked(true);
-        _coreMeterUtility.Lock();
+        _coreMeterUtility?.Lock();
         _terminalWindow.RefreshCursorAfterWindowLock();
         TerminalWindowUiUpdate();
     }
@@ -562,7 +591,7 @@ public partial class MainWindow : Window
         else
         {
             _terminalWindow.SetWindowLocked(false);
-            _coreMeterUtility.Unlock();
+            _coreMeterUtility?.Unlock();
         }
     }
 
